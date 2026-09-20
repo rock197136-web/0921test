@@ -3255,7 +3255,7 @@ body::before{opacity:.42;}
           query, where, limit
         } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
         const {
-          getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut: fbSignOut,
+          getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut: fbSignOut,
           onAuthStateChanged
         } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js");
 
@@ -3279,7 +3279,18 @@ body::before{opacity:.42;}
         // this call mainly exists to surface a specific error (e.g. the
         // browser blocked the redirect entirely, common in some in-app
         // webviews) that onAuthStateChanged alone wouldn't tell us about.
-        getRedirectResult(auth).catch(err => {
+        getRedirectResult(auth).then(result => {
+          // 瀏覽器封鎖第三方儲存空間時，redirect 回來「不會報錯」，
+          // 只是 result 為 null 且沒有登入者 → 過去就是這樣造成無限輪迴。
+          // 若登入前有留下 intent 旗標、回來卻沒登入，明確告知使用者。
+          let pending = null;
+          try{ pending = sessionStorage.getItem('beyblade-x-archive-redirect-intent'); }catch(e){}
+          if(!result && !auth.currentUser && pending !== null){
+            window.dispatchEvent(new CustomEvent('archive-redirect-error', {
+              detail: { code: 'auth/web-storage-unsupported' }
+            }));
+          }
+        }).catch(err => {
           console.error('Google 登入失敗（redirect 回傳錯誤）：', err);
           window.dispatchEvent(new CustomEvent('archive-redirect-error', { detail: err }));
         });
@@ -3362,10 +3373,22 @@ body::before{opacity:.42;}
             getUser(){ return currentUser; },
             onChange(fn){ authListeners.push(fn); try{ fn(currentUser); }catch(e){} },
             async signIn(){
-              // Redirect-based flow: this navigates the tab away immediately
-              // and does not resolve with a user here — the signed-in state
-              // shows up via onAuthStateChanged after the page reloads.
-              await signInWithRedirect(auth, googleProvider);
+              // 優先使用 popup：不會離開頁面，也不依賴「redirect 回來後讀取
+              // 第三方儲存空間」，所以不會被 Safari / Chrome 的儲存分區擋掉。
+              // ⚠️ 這裡在呼叫 signInWithPopup 之前不能有任何 await，
+              //    否則會失去「使用者點擊」的手勢而被瀏覽器當成廣告彈窗封鎖。
+              try{
+                const result = await signInWithPopup(auth, googleProvider);
+                return result.user;
+              }catch(err){
+                const code = err && err.code;
+                // 彈窗被擋、或環境不支援彈窗（部分內建瀏覽器）→ 退回 redirect
+                if(code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'){
+                  await signInWithRedirect(auth, googleProvider);
+                  return null; // 頁面會被導走，這裡不會真的回傳
+                }
+                throw err;
+              }
             },
             async signOut(){
               await fbSignOut(auth);
@@ -5366,7 +5389,8 @@ function describeAuthError(err){
     'auth/unauthorized-domain': '目前這個網域沒有被加進 Firebase 的「授權網域」清單（Authentication → Settings → Authorized domains）。',
     'auth/operation-not-supported-in-this-environment': '目前的瀏覽器環境不支援這個登入方式（常見於 LINE／IG／FB 內建瀏覽器），請改用系統瀏覽器（Safari／Chrome）開啟本頁再試一次。',
     'auth/web-storage-unsupported': '目前的瀏覽器封鎖了第三方 cookie／儲存空間，Google 登入需要它才能運作，請確認瀏覽器設定或換一個瀏覽器再試。',
-    'auth/network-request-failed': '網路連線失敗，請確認網路狀況後再試一次。'
+    'auth/network-request-failed': '網路連線失敗，請確認網路狀況後再試一次。',
+    'auth/popup-blocked': '登入視窗被瀏覽器擋下了，請允許本網站的彈出視窗後再試一次。'
   };
   const friendly = known[code];
   return friendly ? `${friendly}（${code}）` : `登入失敗：${code || (err && err.message) || '未知錯誤'}`;
@@ -5379,13 +5403,22 @@ function handleArchiveSignIn(){
   const label = document.getElementById('archiveSignInLabel');
   if(btn){ btn.disabled = true; }
   if(label){ label.innerText = '正在前往 Google 登入...'; }
-  // signInWithRedirect navigates away immediately — this call is not
-  // expected to resolve normally; the .catch only fires for a synchronous
-  // setup failure (e.g. redirect blocked outright by the browser).
-  window.cloudSync.auth.signIn().catch(err => {
+  // 先走 popup（成功會 resolve 出 user）；只有彈窗被擋時才會退回 redirect，
+  // 此時頁面會被導走，這個 promise 不會 resolve。
+  window.cloudSync.auth.signIn().then(user => {
+    // popup 成功：頁面沒有被導走，直接更新彈窗內容（會出現「儲存」區塊）
+    if(user){
+      try{ sessionStorage.removeItem(ARCHIVE_REDIRECT_INTENT_KEY); }catch(e2){}
+      renderArchiveModal();
+    }
+  }).catch(err => {
     try{ sessionStorage.removeItem(ARCHIVE_REDIRECT_INTENT_KEY); }catch(e2){}
-    document.getElementById('archiveAuthError').innerText = describeAuthError(err);
-    console.error(err);
+    const code = err && err.code;
+    // 使用者自己關掉登入視窗，不算錯誤，不用顯示紅字
+    if(code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request'){
+      document.getElementById('archiveAuthError').innerText = describeAuthError(err);
+      console.error(err);
+    }
     if(btn) btn.disabled = false;
     if(label) label.innerText = '使用 Google 帳號登入';
   });
