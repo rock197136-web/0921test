@@ -3211,6 +3211,205 @@ body::before{opacity:.42;}
   .player-next-match-versus{font-size:16px;}
 }
 </style>
+<style id="archive-redesign">
+/* =========================================================
+   我的賽事庫 — 手機優先的全螢幕版面
+   手機：整個畫面就是一張紙（library / detail 各一張，detail 疊在上面）
+   桌機：置中的面板，點背景可關閉
+   顏色全部沿用站上的 CSS 變數，隨主題一起變。
+========================================================= */
+.arc-sheet{
+  position:fixed; inset:0; z-index:100; display:none;
+  background:rgba(4,4,3,.78); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+}
+.arc-sheet.show{ display:flex; justify-content:center; }
+.arc-sheet.arc-detail{ z-index:101; }
+.arc-panel{
+  width:100%; max-width:680px; height:100%; min-height:0;
+  display:flex; flex-direction:column;
+  background:var(--panel); color:var(--text);
+}
+@media(min-width:720px){
+  .arc-sheet.show{ align-items:center; padding:28px 20px; }
+  .arc-panel{ height:min(100%,880px); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 24px 60px -20px rgba(0,0,0,.8); }
+}
+@keyframes arcSlideIn{ from{ transform:translateX(28px); opacity:0; } to{ transform:none; opacity:1; } }
+.arc-sheet.arc-detail.show .arc-panel{ animation:arcSlideIn .22s ease-out; }
+@media(prefers-reduced-motion:reduce){ .arc-sheet.arc-detail.show .arc-panel{ animation:none; } .arc-skel i{ animation:none !important; } }
+
+/* --- 標題列 --- */
+.arc-head{
+  flex:0 0 auto; display:flex; align-items:center; gap:4px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 6px 8px 18px; min-height:62px;
+  background:var(--panel); border-bottom:1px solid var(--border);
+}
+.arc-detail .arc-head{ padding-left:6px; }
+.arc-head-main{ flex:1; min-width:0; }
+.arc-title{ margin:0; display:flex; align-items:center; gap:8px; font:700 19px/1.3 'Noto Sans TC',sans-serif; }
+.arc-title-ico{ display:inline-flex; color:var(--cyan); }
+.arc-title-clamp{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; font-size:17px; }
+.arc-sub{ margin-top:2px; display:flex; align-items:center; gap:2px; font-size:12.5px; color:var(--muted); min-width:0; }
+.arc-sub .arc-who{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.arc-sub .arc-link{ padding:6px 8px; min-height:0; margin:-6px 0; }
+.arc-icon-btn{
+  flex:0 0 46px; width:46px; height:46px; display:grid; place-items:center;
+  background:transparent; border:0; border-radius:12px; color:var(--text);
+}
+.arc-icon-btn:active{ background:var(--panel-2); }
+
+/* --- 分頁 --- */
+.arc-tabs{ flex:0 0 auto; display:flex; background:var(--panel); border-bottom:1px solid var(--border); }
+.arc-tab{
+  flex:1; min-height:48px; display:flex; align-items:center; justify-content:center; gap:7px;
+  background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px;
+  color:var(--muted); font:600 14.5px 'Noto Sans TC',sans-serif;
+}
+.arc-tab[aria-selected="true"]{ color:var(--cyan-soft); border-bottom-color:var(--cyan); }
+.arc-tab-n{ padding:2px 7px; border-radius:99px; background:var(--panel-2); color:var(--muted); font:700 12px/1.4 'Rajdhani',sans-serif; }
+.arc-tab[aria-selected="true"] .arc-tab-n{ color:var(--cyan-soft); }
+
+/* --- 捲動區 --- */
+.arc-scroll{
+  flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));
+}
+.arc-pad{ padding:20px 18px; }
+.arc-note{ margin:0 0 16px; font-size:14px; line-height:1.75; color:var(--muted); }
+.arc-error{ padding:0 18px; margin-top:12px; font-size:13px; line-height:1.6; color:#ff8f8f; }
+.arc-error:empty{ display:none; }
+.arc-link{
+  background:none; border:0; padding:8px 6px; min-height:36px;
+  color:var(--cyan-soft); font:600 13px 'Noto Sans TC',sans-serif; text-decoration:underline; text-underline-offset:3px;
+}
+.arc-sheet button:focus-visible,.arc-sheet input:focus-visible{ outline:2px solid var(--cyan-soft); outline-offset:2px; }
+
+/* --- 搜尋框 --- */
+.arc-search{ position:sticky; top:0; z-index:3; padding:12px 16px 8px; background:var(--panel); }
+.arc-tools{ padding:12px 16px 8px; }
+.arc-field{ position:relative; }
+.arc-field input{
+  width:100%; height:46px; padding:0 44px 0 42px; border-radius:12px;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--text); font-size:16px; /* 16px：避免 iOS 聚焦時自動放大 */
+}
+.arc-field input::placeholder{ color:var(--muted); }
+.arc-field .arc-ico{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+.arc-field .arc-clear{
+  position:absolute; right:3px; top:50%; transform:translateY(-50%); width:40px; height:40px;
+  display:grid; place-items:center; background:none; border:0; border-radius:10px; color:var(--muted);
+}
+
+/* --- 篩選 chips（可橫向滑動） --- */
+.arc-chips{ display:flex; gap:8px; overflow-x:auto; padding:6px 16px 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.arc-chips::-webkit-scrollbar{ display:none; }
+.arc-chip{
+  flex:0 0 auto; min-height:38px; padding:0 14px; display:inline-flex; align-items:center; gap:7px;
+  border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--muted);
+  font:600 13.5px 'Noto Sans TC',sans-serif; white-space:nowrap;
+}
+.arc-chip small{ font:700 12.5px 'Rajdhani',sans-serif; opacity:.8; }
+.arc-chip[aria-pressed="true"]{ background:var(--cyan); border-color:var(--cyan); color:#170f02; }
+.arc-count{ padding:2px 18px 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:34px; font-size:12.5px; color:var(--muted); }
+.arc-count .arc-link{ padding:4px 0 4px 8px; }
+
+/* --- 儲存目前賽事 --- */
+.arc-save{ margin:14px 16px 4px; padding:14px; border:1px solid rgba(255,159,36,.5); border-radius:14px; background:rgba(255,159,36,.07); }
+.arc-save-title{ font:700 15px 'Noto Sans TC',sans-serif; }
+.arc-save-meta{ margin:4px 0 12px; font-size:13px; color:var(--cyan-soft); overflow-wrap:anywhere; }
+.arc-save .field-label{ margin-bottom:6px; }
+.arc-save .text-input{ font-size:16px; }
+.arc-save-notice{ margin:6px 0 0; font-size:13.5px; line-height:1.7; color:var(--muted); }
+
+/* --- 賽事庫列表：一列一場，依月份分組 --- */
+.arc-month{ padding:18px 18px 8px; font:700 13px 'Noto Sans TC',sans-serif; color:var(--muted); }
+.arc-row{
+  display:block; width:100%; text-align:left; color:inherit; background:none; border:0;
+  border-top:1px solid var(--border); padding:14px 18px; min-height:68px;
+  content-visibility:auto; contain-intrinsic-size:auto 70px;
+}
+.arc-row:active{ background:var(--panel-2); }
+.arc-row-top{ display:flex; align-items:baseline; gap:12px; }
+.arc-row-title{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; font-weight:700; }
+.arc-row-date{ flex:0 0 auto; font:700 14px 'Rajdhani',sans-serif; color:var(--muted); font-variant-numeric:tabular-nums; }
+.arc-row-bot{ display:flex; align-items:center; gap:8px; margin-top:7px; min-width:0; font-size:13px; }
+.arc-row-champ{ flex:0 1 auto; max-width:48%; min-width:0; display:inline-flex; align-items:center; gap:5px; color:var(--champ-gold-soft); font-weight:700; }
+.arc-row-champ > span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.arc-row-champ.none{ color:var(--muted); font-weight:500; }
+.arc-tag{ flex:0 0 auto; padding:1px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; color:var(--muted); }
+.arc-row-meta{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+.arc-more{ padding:14px 16px 0; }
+.arc-empty{ display:grid; gap:8px; padding:40px 24px; text-align:center; font-size:14px; line-height:1.7; color:var(--muted); }
+.arc-empty b{ color:var(--text); font-size:16px; }
+.arc-skel{ padding:0 18px; }
+.arc-skel div{ padding:16px 0; border-top:1px solid var(--border); }
+.arc-skel i{ display:block; height:12px; border-radius:6px; background:var(--panel-2); animation:arcPulse 1.3s ease-in-out infinite; }
+.arc-skel i + i{ margin-top:10px; width:55%; }
+@keyframes arcPulse{ 50%{ opacity:.45; } }
+
+/* --- 賽事詳情：概覽 --- */
+.arc-sec{ padding:18px 16px 4px; }
+.arc-h{ margin:0 0 10px; font:700 15px 'Noto Sans TC',sans-serif; }
+.arc-h small{ margin-left:8px; font-weight:500; font-size:12.5px; color:var(--muted); }
+.arc-champ{ padding:16px 16px 18px; border:1px solid rgba(224,180,69,.5); border-radius:14px; background:rgba(224,180,69,.08); }
+.arc-champ-l{ display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--champ-gold); }
+.arc-champ-n{ margin-top:6px; font:800 28px/1.25 'Noto Sans TC',sans-serif; color:var(--champ-gold-soft); overflow-wrap:anywhere; }
+.arc-pod2{ display:grid; grid-template-columns:repeat(auto-fit,minmax(0,1fr)); gap:10px; margin-top:10px; }
+.arc-pod{ padding:12px 14px; border:1px solid var(--border); border-radius:12px; min-width:0; }
+.arc-pod-l{ display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--silver); }
+.arc-pod.bronze .arc-pod-l{ color:var(--bronze); }
+.arc-pod-n{ margin-top:4px; font-size:17px; font-weight:700; overflow-wrap:anywhere; }
+.arc-stats{ display:grid; margin:18px 16px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.arc-stat{ padding:14px 4px; text-align:center; }
+.arc-stat + .arc-stat{ border-left:1px solid var(--border); }
+.arc-stat b{ display:block; font:800 28px/1.1 'Rajdhani',sans-serif; font-variant-numeric:tabular-nums; }
+.arc-stat span{ display:block; margin-top:4px; font-size:12.5px; color:var(--muted); }
+.arc-fin{ display:grid; grid-template-columns:104px 1fr 40px; align-items:center; gap:10px; padding:7px 0; font-size:13.5px; }
+.arc-fin-l{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.arc-fin-l i{ font-style:normal; color:var(--cyan); width:14px; text-align:center; }
+.arc-bar{ height:8px; border-radius:99px; background:var(--panel-2); overflow:hidden; }
+.arc-bar i{ display:block; height:100%; border-radius:inherit; background:var(--cyan); }
+.arc-fin-n{ text-align:right; font:700 15px 'Rajdhani',sans-serif; font-variant-numeric:tabular-nums; }
+.arc-danger{ padding-top:26px; }
+
+/* --- 賽事詳情：賽程（依輪次分組、可收合） --- */
+.arc-grp-h{
+  position:sticky; top:0; z-index:2; width:100%; min-height:46px; padding:0 18px;
+  display:flex; align-items:center; gap:8px; text-align:left;
+  background:var(--panel); border:0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-top:-1px;
+  color:var(--text); font:700 14.5px 'Noto Sans TC',sans-serif;
+}
+.arc-grp-n{ margin-left:auto; font-weight:500; font-size:12.5px; color:var(--muted); }
+.arc-grp-h svg{ flex:0 0 auto; color:var(--muted); transition:transform .2s; }
+.arc-grp.open .arc-grp-h svg{ transform:rotate(180deg); }
+.arc-grp.forced .arc-grp-h{ pointer-events:none; }
+.arc-grp.forced .arc-grp-h svg{ display:none; }
+.arc-grp-body{ display:none; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:8px; padding:12px 16px 16px; }
+.arc-grp.open .arc-grp-body{ display:grid; }
+.arc-m{ border:1px solid var(--border); border-radius:10px; background:var(--panel-2); overflow:hidden; }
+.arc-m-r{
+  display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 12px;
+  border-left:3px solid transparent; color:var(--muted);
+}
+.arc-m-r + .arc-m-r{ border-top:1px solid rgba(255,255,255,.06); }
+.arc-m-r.is-win{ border-left-color:var(--cyan); color:var(--text); font-weight:700; }
+.arc-m-n{ flex:1; min-width:0; overflow-wrap:anywhere; font-size:15px; line-height:1.35; }
+.arc-m-s{ flex:0 0 auto; min-width:24px; text-align:right; font:800 21px/1 'Rajdhani',sans-serif; font-variant-numeric:tabular-nums; }
+.arc-m-r.is-win .arc-m-s{ color:var(--cyan-soft); }
+.arc-m-r.hit .arc-m-n{ color:var(--cyan-soft); text-decoration:underline; text-underline-offset:4px; }
+
+/* --- 賽事詳情：選手排名 --- */
+.arc-p-head,.arc-p{ display:grid; grid-template-columns:36px minmax(0,1fr) 34px 34px 54px; align-items:center; gap:6px; padding:0 18px 0 12px; }
+.arc-p-head{ position:sticky; top:0; z-index:2; min-height:36px; background:var(--panel); border-bottom:1px solid var(--border); font-size:12.5px; color:var(--muted); }
+.arc-p-head span:nth-child(n+3){ text-align:center; }
+.arc-p-head span:last-child{ text-align:right; }
+.arc-p{ width:100%; min-height:54px; text-align:left; background:none; border:0; border-bottom:1px solid rgba(255,255,255,.06); color:var(--text); font-size:15.5px; }
+.arc-p:active{ background:var(--panel-2); }
+.arc-p-rank{ text-align:center; font:800 18px 'Rajdhani',sans-serif; color:var(--muted); font-variant-numeric:tabular-nums; }
+.arc-p-rank.r1{ color:var(--champ-gold); } .arc-p-rank.r2{ color:var(--silver); } .arc-p-rank.r3{ color:var(--bronze); }
+.arc-p-name{ font-weight:600; overflow-wrap:anywhere; line-height:1.35; }
+.arc-p-n{ text-align:center; font:700 17px 'Rajdhani',sans-serif; font-variant-numeric:tabular-nums; }
+.arc-p-d{ text-align:right; font:700 16px 'Rajdhani',sans-serif; font-variant-numeric:tabular-nums; color:var(--muted); }
+.arc-p-d.pos{ color:var(--cyan-soft); } .arc-p-d.neg{ color:#d99a9a; }
+</style>
 </head>
 <body>
 
@@ -3993,56 +4192,75 @@ body::before{opacity:.42;}
   </div>
 </div>
 
-<div class="modal" id="archiveModal">
-  <div class="modal-box" style="max-width:460px;">
-    <div class="modal-title"><span id="archiveModalIcon"></span> 我的賽事庫</div>
-
-    <div id="archiveNotConfigured" class="hidden">
-      <div class="text-muted" style="font-size:13px; line-height:1.75;">
-        這個部署還沒有連上雲端資料庫，所以「我的賽事庫」目前無法使用。這不影響一般計分與觀看功能。
+<div class="arc-sheet" id="archiveModal" role="dialog" aria-modal="true" aria-labelledby="arcLibTitle" onclick="if(event.target===this)hideArchiveModal()">
+  <div class="arc-panel">
+    <header class="arc-head">
+      <div class="arc-head-main">
+        <h2 class="arc-title" id="arcLibTitle"><span id="archiveModalIcon" class="arc-title-ico"></span>我的賽事庫</h2>
+        <div class="arc-sub hidden" id="archiveAccountLine"></div>
       </div>
-      <button class="btn btn-dark btn-block" style="margin-top:18px;" onclick="hideArchiveModal()">關閉</button>
-    </div>
+      <button type="button" class="arc-icon-btn" onclick="hideArchiveModal()" aria-label="關閉賽事庫">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </header>
 
-    <div id="archiveConfigured" class="hidden">
-
-      <div id="archiveSignedOut">
-        <div class="text-muted" style="font-size:13px; line-height:1.75;">
-          登入 Google 帳號後，可以把整場已完成的賽事存起來，之後換裝置也能查回完整的對戰紀錄。平常不登入完全不影響比賽本身，裁判／選手代碼照常運作。
-        </div>
-        <button class="btn btn-primary btn-block" id="archiveSignInBtn" style="margin-top:14px;" onclick="handleArchiveSignIn()"><span id="archiveSignInIcon" class="btn-icon-slot"></span> <span id="archiveSignInLabel">使用 Google 帳號登入</span></button>
-        <div id="archiveAuthError" style="margin-top:10px; font-size:12px; color:#ff8f8f;"></div>
+    <div class="arc-scroll" id="archiveScroll">
+      <div id="archiveNotConfigured" class="arc-pad hidden">
+        <p class="arc-note" style="margin:0;">這個部署還沒有連上雲端資料庫，所以「我的賽事庫」目前無法使用。這不影響一般計分與觀看功能。</p>
       </div>
 
-      <div id="archiveSignedIn" class="hidden">
-        <div class="cloud-code-item" style="margin-bottom:14px;">
-          <div class="cloud-code-tag" id="archiveAccountLabel">已登入</div>
-          <div class="text-muted" style="font-size:13px;" id="archiveAccountEmail"></div>
-          <button class="cloud-share-btn" onclick="handleArchiveSignOut()">登出</button>
+      <div id="archiveConfigured" class="hidden">
+        <div id="archiveSignedOut" class="arc-pad">
+          <p class="arc-note">登入 Google 帳號後，可以把整場已完成的賽事存起來，之後換裝置也能查回完整的對戰紀錄。平常不登入完全不影響比賽本身，裁判／選手代碼照常運作。</p>
+          <button class="btn btn-primary btn-block" id="archiveSignInBtn" onclick="handleArchiveSignIn()"><span id="archiveSignInIcon" class="btn-icon-slot"></span> <span id="archiveSignInLabel">使用 Google 帳號登入</span></button>
+          <div id="archiveAuthError" style="margin-top:10px; font-size:13px; color:#ff8f8f;"></div>
         </div>
 
-        <div id="archiveSaveSection" class="hidden" style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">
-          <div class="field-label">將目前這場已完成的賽事存檔</div>
-          <input class="text-input" id="archiveTitleInput" placeholder="賽事名稱（選填）">
-          <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="confirmSaveArchive()" id="archiveSaveBtn">儲存這場賽事</button>
+        <div id="archiveSignedIn" class="hidden">
+          <section class="arc-save hidden" id="archiveSaveSection">
+            <div class="arc-save-title">儲存目前這場賽事</div>
+            <div id="archiveSaveForm">
+              <div class="arc-save-meta" id="archiveSaveMeta"></div>
+              <div class="field-label">賽事名稱（選填）</div>
+              <input class="text-input" id="archiveTitleInput" placeholder="例如：秋季盃 第三站" autocomplete="off">
+              <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="confirmSaveArchive()" id="archiveSaveBtn">儲存這場賽事</button>
+            </div>
+            <p class="arc-save-notice hidden" id="archiveSaveNotice">目前這場賽事還沒有產生冠軍。決賽結束後，再回到這裡就能儲存。</p>
+          </section>
+
+          <div class="arc-search" id="archiveSearchWrap">
+            <div class="arc-field">
+              <svg class="arc-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input id="archiveSearchInput" type="text" inputmode="search" enterkeyhint="search" placeholder="搜尋賽事、冠軍或選手" autocomplete="off" oninput="arcLibSearch(this.value)">
+              <button type="button" class="arc-clear hidden" id="archiveSearchClear" aria-label="清除搜尋" onclick="arcLibSearch('',true)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="arc-chips hidden" id="archiveChips"></div>
+          <div class="arc-count" id="archiveSummary"></div>
+          <div id="archiveList"></div>
         </div>
 
-        <div class="field-label">已封存的賽事</div>
-        <div id="archiveListEmpty" class="text-muted" style="font-size:13px; padding:14px 0;">還沒有封存過的賽事。</div>
-        <div id="archiveList" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto;"></div>
+        <div id="archiveError" class="arc-error"></div>
       </div>
-
-      <div id="archiveError" style="margin-top:12px; font-size:12px; color:#ff8f8f;"></div>
-      <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="hideArchiveModal()">關閉</button>
     </div>
   </div>
 </div>
 
-<div class="modal" id="archiveDetailModal">
-  <div class="modal-box" style="max-width:460px;">
-    <div class="modal-title"><span id="archiveDetailIcon"></span> <span id="archiveDetailTitle">賽事紀錄</span></div>
-    <div id="archiveDetailBody" style="font-size:13px; line-height:1.8; max-height:60vh; overflow-y:auto;"></div>
-    <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="hideArchiveDetailModal()">關閉</button>
+<div class="arc-sheet arc-detail" id="archiveDetailModal" role="dialog" aria-modal="true" aria-labelledby="archiveDetailTitle" onclick="if(event.target===this)hideArchiveDetailModal()">
+  <div class="arc-panel">
+    <header class="arc-head">
+      <button type="button" class="arc-icon-btn" onclick="hideArchiveDetailModal()" aria-label="返回賽事庫">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="arc-head-main">
+        <h2 class="arc-title arc-title-clamp" id="archiveDetailTitle">賽事紀錄</h2>
+        <div class="arc-sub" id="archiveDetailSub"></div>
+      </div>
+    </header>
+    <nav class="arc-tabs" id="archiveDetailTabs" role="tablist" aria-label="賽事內容"></nav>
+    <div class="arc-scroll" id="archiveDetailBody"></div>
   </div>
 </div>
 
@@ -5313,73 +5531,219 @@ window.addEventListener('archive-redirect-error', (e) => {
   if(el) el.innerText = describeAuthError(err);
 });
 
+/* ---------- 賽事庫（列表）---------- */
+const ARC_FORMAT = { knockout:'單淘汰', double_elimination:'雙敗淘汰', single:'單循環', double:'雙循環', team3v3:'3v3 團體' };
+const ARC_PAGE = 40;            // 列表一次顯示幾場，超過用「顯示更多」
+const ARC_CHEVRON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const ARC_CLEAR_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+const ARC_SEARCH_SVG = '<svg class="arc-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+
+let arcItems = [];              // 已載入的封存清單（含完整內容，開詳情不用再讀一次）
+let arcLoaded = false;
+let arcLibQuery = '';
+let arcLibFormat = 'all';
+let arcLibLimit = ARC_PAGE;
+let arcD = null;                // 目前打開的詳情狀態
+
+function arcFormatLabel(f){ return ARC_FORMAT[f] || '賽事'; }
+function arcUnit(f){ return f === 'team3v3' ? '隊' : '人'; }
+function arcDate(item){
+  const ms = item.archivedAt && item.archivedAt.seconds ? item.archivedAt.seconds * 1000 : (item.completedAt || 0);
+  return ms ? new Date(ms) : null;
+}
+function arcPrepare(item){
+  const names = (item.players || []).map(p => p.name).join(' ');
+  item._q = [item.title, item.champion, item.runnerUp, item.third, names].filter(Boolean).join(' ').toLowerCase();
+  return item;
+}
+function arcLock(){ document.body.style.overflow = 'hidden'; }
+function arcUnlock(){ if(!document.querySelector('.arc-sheet.show')) document.body.style.overflow = ''; }
+
 function openArchiveModal(saveMode){
   archiveModalSaveMode = !!saveMode;
-  document.getElementById('archiveError').innerText = '';
+  document.getElementById('archiveError').innerHTML = '';
   document.getElementById('archiveAuthError').innerText = '';
   const signInBtn = document.getElementById('archiveSignInBtn');
   const signInLabel = document.getElementById('archiveSignInLabel');
   if(signInBtn) signInBtn.disabled = false;
   if(signInLabel) signInLabel.innerText = '使用 Google 帳號登入';
 
+  arcLibQuery = ''; arcLibFormat = 'all'; arcLibLimit = ARC_PAGE;
+  const si = document.getElementById('archiveSearchInput');
+  if(si) si.value = '';
+
   const notConfigured = !(window.cloudSync && window.cloudSync.isConfigured && window.cloudSync.isConfigured() && window.cloudSync.ready && window.cloudSync.auth);
   document.getElementById('archiveNotConfigured').classList.toggle('hidden', !notConfigured);
   document.getElementById('archiveConfigured').classList.toggle('hidden', notConfigured);
 
   document.getElementById('archiveModal').classList.add('show');
+  document.getElementById('archiveScroll').scrollTop = 0;
+  arcLock();
   if(!notConfigured) renderArchiveModal();
 }
 
 function hideArchiveModal(){
+  hideArchiveDetailModal();
   document.getElementById('archiveModal').classList.remove('show');
+  arcUnlock();
 }
 
 function renderArchiveModal(){
   const user = window.cloudSync.auth.getUser();
   document.getElementById('archiveSignedOut').classList.toggle('hidden', !!user);
   document.getElementById('archiveSignedIn').classList.toggle('hidden', !user);
-  if(!user) return;
 
-  document.getElementById('archiveAccountLabel').textContent = '已登入';
-  document.getElementById('archiveAccountEmail').textContent = user.displayName ? `${user.displayName}（${user.email || ''}）` : (user.email || '');
-
-  const saveSection = document.getElementById('archiveSaveSection');
-  const awardData = getAwardPodiumData();
-  const canSave = archiveModalSaveMode && awardData.ready && !!awardData.champion;
-  saveSection.classList.toggle('hidden', !canSave);
-  if(canSave){
-    const titleInput = document.getElementById('archiveTitleInput');
-    if(!titleInput.value) titleInput.value = state.tournament.name || '';
+  const acct = document.getElementById('archiveAccountLine');
+  if(!user){
+    acct.classList.add('hidden');
+    acct.innerHTML = '';
+    arcItems = []; arcLoaded = false;
+    hideArchiveDetailModal();
+    return;
   }
+  const who = user.displayName || user.email || '已登入';
+  acct.innerHTML = `<span class="arc-who">${escapeHtml(who)}</span><button type="button" class="arc-link" onclick="handleArchiveSignOut()">登出</button>`;
+  acct.classList.remove('hidden');
 
+  arcRenderSaveSection();
   refreshArchiveList();
+}
+
+function arcRenderSaveSection(){
+  const sec = document.getElementById('archiveSaveSection');
+  sec.classList.toggle('hidden', !archiveModalSaveMode);
+  if(!archiveModalSaveMode) return;
+  const data = getAwardPodiumData();
+  const ready = !!(data.ready && data.champion);
+  document.getElementById('archiveSaveForm').classList.toggle('hidden', !ready);
+  document.getElementById('archiveSaveNotice').classList.toggle('hidden', ready);
+  if(!ready) return;
+  const unit = state.tournament.format === 'team3v3' ? '支隊伍' : '位選手';
+  document.getElementById('archiveSaveMeta').textContent = `冠軍 ${data.champion}　${data.playerCount} ${unit}　${data.totalMatches} 場`;
+  const titleInput = document.getElementById('archiveTitleInput');
+  if(!titleInput.value) titleInput.value = state.tournament.name || '';
+}
+
+function arcSkeleton(){
+  return '<div class="arc-skel" aria-hidden="true">' + '<div><i></i><i></i></div>'.repeat(5) + '</div>';
 }
 
 function refreshArchiveList(){
   const listEl = document.getElementById('archiveList');
-  const emptyEl = document.getElementById('archiveListEmpty');
-  listEl.innerHTML = '';
+  if(!arcLoaded){
+    listEl.innerHTML = arcSkeleton();
+    document.getElementById('archiveSummary').textContent = '';
+  }
   window.cloudSync.listMyArchives().then(items => {
-    emptyEl.classList.toggle('hidden', items.length > 0);
-    listEl.innerHTML = items.map(item => {
-      const when = item.archivedAt && item.archivedAt.seconds
-        ? new Date(item.archivedAt.seconds * 1000).toLocaleDateString()
-        : '';
-      const title = escapeHtml(item.title || '未命名賽事');
-      const champ = item.champion ? `冠軍：${escapeHtml(item.champion)}` : '';
-      return `
-        <div class="cloud-code-item">
-          <div class="cloud-code-tag">${title}</div>
-          <div class="text-muted" style="font-size:12px;">${when}${champ ? '　·　' + champ : ''}</div>
-          <button class="cloud-share-btn" onclick="viewArchive('${item.id}')">查看</button>
-          <button class="cloud-share-btn" onclick="deleteArchiveConfirm('${item.id}')">刪除</button>
-        </div>
-      `;
-    }).join('');
+    arcItems = items.map(arcPrepare);
+    arcLoaded = true;
+    document.getElementById('archiveError').innerHTML = '';
+    arcRenderChips();
+    arcRenderLibraryList();
   }).catch(err => {
-    document.getElementById('archiveError').innerText = '讀取賽事庫失敗，請稍後再試。';
     console.error(err);
+    if(!arcLoaded) listEl.innerHTML = '';
+    document.getElementById('archiveError').innerHTML = '讀取賽事庫失敗。<button type="button" class="arc-link" onclick="refreshArchiveList()">重新載入</button>';
   });
+}
+
+function arcRenderChips(){
+  const box = document.getElementById('archiveChips');
+  const counts = {};
+  arcItems.forEach(i => { const f = i.format || 'knockout'; counts[f] = (counts[f] || 0) + 1; });
+  const keys = Object.keys(counts);
+  if(keys.length < 2){
+    arcLibFormat = 'all';
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+  const order = Object.keys(ARC_FORMAT);
+  const rankOf = k => { const i = order.indexOf(k); return i < 0 ? 99 : i; };
+  keys.sort((a, b) => rankOf(a) - rankOf(b));
+  const chip = (key, label, n) =>
+    `<button type="button" class="arc-chip" aria-pressed="${arcLibFormat === key}" data-f="${escapeAttr(key)}" onclick="arcSetFormat(this.dataset.f)">${escapeHtml(label)}<small>${n}</small></button>`;
+  box.innerHTML = chip('all', '全部', arcItems.length) + keys.map(k => chip(k, arcFormatLabel(k), counts[k])).join('');
+  box.classList.remove('hidden');
+}
+
+function arcSetFormat(f){
+  arcLibFormat = f;
+  arcLibLimit = ARC_PAGE;
+  arcRenderChips();
+  arcRenderLibraryList();
+}
+
+function arcLibSearch(value, resetInput){
+  arcLibQuery = value || '';
+  if(resetInput){ const si = document.getElementById('archiveSearchInput'); if(si){ si.value = ''; si.focus(); } }
+  arcLibLimit = ARC_PAGE;
+  arcRenderLibraryList();
+}
+
+function arcLibMore(){
+  arcLibLimit += ARC_PAGE;
+  arcRenderLibraryList();
+}
+
+function arcRowHTML(item){
+  const d = arcDate(item);
+  const dateTxt = d ? `${d.getMonth() + 1}/${d.getDate()}` : '';
+  const f = item.format || 'knockout';
+  const champ = item.champion
+    ? `<span class="arc-row-champ">${icon('trophy', 14)}<span>${escapeHtml(item.champion)}</span></span>`
+    : '<span class="arc-row-champ none">未產生冠軍</span>';
+  return `<button type="button" class="arc-row" data-id="${escapeAttr(item.id)}" onclick="viewArchive(this.dataset.id)">
+    <span class="arc-row-top"><span class="arc-row-title">${escapeHtml(item.title || '未命名賽事')}</span><span class="arc-row-date">${dateTxt}</span></span>
+    <span class="arc-row-bot">${champ}<span class="arc-tag">${escapeHtml(arcFormatLabel(f))}</span><span class="arc-row-meta">${item.playerCount || 0} ${arcUnit(f)}　${item.matchCount || 0} 場</span></span>
+  </button>`;
+}
+
+function arcRenderLibraryList(){
+  const listEl = document.getElementById('archiveList');
+  const sumEl = document.getElementById('archiveSummary');
+  document.getElementById('archiveSearchClear').classList.toggle('hidden', !arcLibQuery);
+  document.getElementById('archiveSearchWrap').classList.toggle('hidden', !arcItems.length);
+
+  if(!arcItems.length){
+    sumEl.textContent = '';
+    listEl.innerHTML = '<div class="arc-empty"><b>還沒有封存過的賽事</b><span>賽事結束後，按「儲存到我的賽事庫」，就會出現在這裡。</span></div>';
+    return;
+  }
+
+  const q = arcLibQuery.trim().toLowerCase();
+  const filtered = arcItems.filter(i =>
+    (arcLibFormat === 'all' || (i.format || 'knockout') === arcLibFormat) && (!q || i._q.includes(q)));
+  const isFiltered = filtered.length !== arcItems.length;
+  sumEl.innerHTML = `<span>${isFiltered ? `符合 ${filtered.length} 場，共 ${arcItems.length} 場賽事` : `共 ${arcItems.length} 場賽事`}</span>`
+    + (isFiltered ? '<button type="button" class="arc-link" onclick="arcResetLibraryFilters()">清除篩選</button>' : '');
+
+  if(!filtered.length){
+    listEl.innerHTML = `<div class="arc-empty"><b>找不到符合的賽事</b><span>換個關鍵字，或清除篩選再試試。</span></div>`;
+    return;
+  }
+
+  const shown = filtered.slice(0, arcLibLimit);
+  let html = '';
+  let lastKey = null;
+  shown.forEach(item => {
+    const d = arcDate(item);
+    const key = d ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月` : '更早';
+    if(key !== lastKey){ html += `<div class="arc-month">${key}</div>`; lastKey = key; }
+    html += arcRowHTML(item);
+  });
+  if(filtered.length > shown.length){
+    html += `<div class="arc-more"><button type="button" class="btn btn-dark btn-block" onclick="arcLibMore()">顯示更多（還有 ${filtered.length - shown.length} 場）</button></div>`;
+  }
+  listEl.innerHTML = html;
+}
+
+function arcResetLibraryFilters(){
+  arcLibQuery = ''; arcLibFormat = 'all'; arcLibLimit = ARC_PAGE;
+  const si = document.getElementById('archiveSearchInput');
+  if(si) si.value = '';
+  arcRenderChips();
+  arcRenderLibraryList();
 }
 
 function describeAuthError(err){
@@ -5471,71 +5835,348 @@ function confirmSaveArchive(){
   });
 }
 
+/* ---------- 賽事詳情 ---------- */
 function viewArchive(id){
+  const cached = arcItems.find(i => i.id === id);
+  if(cached){ renderArchiveDetail(cached); return; }
   window.cloudSync.getArchive(id).then(item => {
     if(!item){
       document.getElementById('archiveError').innerText = '找不到這筆封存紀錄。';
       return;
     }
-    renderArchiveDetail(item);
+    renderArchiveDetail(arcPrepare(item));
   }).catch(err => {
     document.getElementById('archiveError').innerText = '讀取失敗，請稍後再試。';
     console.error(err);
   });
 }
 
-function renderArchiveDetail(item){
-  document.getElementById('archiveDetailTitle').textContent = item.title || '未命名賽事';
-  const when = item.archivedAt && item.archivedAt.seconds
-    ? new Date(item.archivedAt.seconds * 1000).toLocaleString()
-    : '';
+// 把一份封存資料整理成畫面要用的樣子（分輪次、選手戰績、終結方式統計）
+function arcBuildVM(item){
+  const fmt = item.format || 'knockout';
+  const isTeam = fmt === 'team3v3';
+  const isDE = fmt === 'double_elimination';
+  const isKO = fmt === 'knockout' || isTeam;
+  const players = item.players || [];
+  const nameById = new Map(players.map(p => [p.id, p.name]));
+  const nm = id => nameById.get(id) || '－';
 
-  const nameOfArchived = (id) => {
-    const p = (item.players || []).find(pp => pp.id === id);
-    return p ? p.name : '－';
+  const live = (item.matches || []).filter(m => !m.isBye && !m.inactive);
+  const done = live.filter(m => m.status === 'completed' && m.playerA && m.playerB);
+  const maxRound = Math.max(0, ...live.filter(m => !m.thirdPlace).map(m => m.round || 0));
+  const KO_NAMES = ['決賽', '準決賽', '八強賽', '16 強賽', '32 強賽'];
+  const labelOf = m => {
+    if(isDE){
+      if(m.bracket === 'final') return m.id === 'GF2' ? '加賽' : '總決賽';
+      return `${m.bracket === 'losers' ? '敗部' : '勝部'} 第 ${m.bracketRound || m.round} 輪`;
+    }
+    if(isKO){
+      if(m.thirdPlace) return '季軍戰';
+      const fromEnd = maxRound - (m.round || 0);
+      return KO_NAMES[fromEnd] || `第 ${m.round} 輪`;
+    }
+    return `第 ${m.round} 輪`;
   };
 
-  const matchRows = (item.matches || [])
-    .filter(m => !m.isBye && !m.inactive && m.status === 'completed')
-    .map(m => {
-      const a = escapeHtml(nameOfArchived(m.playerA));
-      const b = escapeHtml(nameOfArchived(m.playerB));
-      const score = (m.scoreA !== undefined && m.scoreB !== undefined) ? `${m.scoreA} : ${m.scoreB}` : '';
-      const winner = m.winner ? escapeHtml(nameOfArchived(m.winner)) : '';
-      return `<div style="display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border);">
-        <span>${a} vs ${b}</span>
-        <span class="text-muted">${score}${winner ? '　勝：' + winner : ''}</span>
-      </div>`;
-    }).join('');
+  const groupMap = new Map();
+  const stat = new Map(players.map(p => [p.id, { name:p.name, w:0, l:0, pf:0, pa:0 }]));
+  const fin = { SPIN:0, OVER:0, BURST:0, XTREME:0 };
+  let finTotal = 0, totalPts = 0;
 
-  document.getElementById('archiveDetailBody').innerHTML = `
-    <div class="text-muted" style="font-size:12px; margin-bottom:10px;">封存時間：${when}</div>
-    <div style="margin-bottom:10px;">
-      ${item.champion ? `🥇 冠軍：${escapeHtml(item.champion)}<br>` : ''}
-      ${item.runnerUp ? `🥈 亞軍：${escapeHtml(item.runnerUp)}<br>` : ''}
-      ${item.third ? `🥉 季軍：${escapeHtml(item.third)}` : ''}
-    </div>
-    <div class="text-muted" style="font-size:12px; margin-bottom:8px;">共 ${item.playerCount || 0} 位選手・${item.matchCount || 0} 場比賽</div>
-    ${matchRows || '<div class="text-muted">沒有對戰紀錄。</div>'}
-  `;
+  done.forEach(m => {
+    const a = Number(m.pointsA) || 0, b = Number(m.pointsB) || 0;
+    totalPts += a + b;
+
+    const label = labelOf(m);
+    const ord = isDE ? (m.round || 0) : (m.round || 0) + (m.thirdPlace ? -0.5 : 0);
+    let g = groupMap.get(label);
+    if(!g){ g = { key:label, label, ord, matches:[] }; groupMap.set(label, g); }
+    g.matches.push({ nA:nm(m.playerA), nB:nm(m.playerB), sA:a, sB:b, hasScore:(a + b) > 0, winA:m.winner === m.playerA, winB:m.winner === m.playerB });
+
+    const sa = stat.get(m.playerA), sb = stat.get(m.playerB);
+    if(sa && sb){
+      sa.pf += a; sa.pa += b; sb.pf += b; sb.pa += a;
+      if(m.winner === m.playerA){ sa.w++; sb.l++; }
+      else if(m.winner === m.playerB){ sb.w++; sa.l++; }
+    }
+    (m.log || []).forEach(e => {
+      if(e && Object.prototype.hasOwnProperty.call(fin, e.finish)){ fin[e.finish]++; finTotal++; }
+    });
+  });
+
+  // 淘汰賽：決賽排最前面；循環賽：第 1 輪排最前面
+  const groups = [...groupMap.values()].sort((x, y) => (isKO || isDE) ? y.ord - x.ord : x.ord - y.ord);
+
+  const podium = [item.champion, item.runnerUp, item.third];
+  const podiumRank = name => { const i = podium.indexOf(name); return i < 0 ? 9 : i; };
+  const playerList = [...stat.values()]
+    .map(s => Object.assign(s, { diff: s.pf - s.pa }))
+    .sort((x, y) => podiumRank(x.name) - podiumRank(y.name) || y.w - x.w || y.diff - x.diff || x.name.localeCompare(y.name, 'zh-Hant'));
+  playerList.forEach((p, i) => { p.rank = i + 1; });
+
+  return { fmt, isTeam, isDE, isKO, groups, playerList, doneCount:done.length, totalPts, fin, finTotal,
+           entrants: item.playerCount || players.filter(p => !p.withdrawn).length };
+}
+
+function renderArchiveDetail(item){
+  const vm = arcBuildVM(item);
+  arcD = {
+    item, vm,
+    tab: 'overview',
+    q: { matches:'', players:'' },
+    round: 'all',
+    open: new Set(vm.groups.length ? [vm.groups[0].key] : [])
+  };
+  document.getElementById('archiveDetailTitle').textContent = item.title || '未命名賽事';
+  const d = arcDate(item);
+  const dateTxt = d ? `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}` : '';
+  document.getElementById('archiveDetailSub').textContent = `${dateTxt}　${arcFormatLabel(vm.fmt)}`;
+  arcRenderDetail(true);
   document.getElementById('archiveDetailModal').classList.add('show');
+  arcLock();
 }
 
 function hideArchiveDetailModal(){
-  document.getElementById('archiveDetailModal').classList.remove('show');
+  const el = document.getElementById('archiveDetailModal');
+  if(el) el.classList.remove('show');
+  arcD = null;
+  arcUnlock();
+}
+
+function arcRenderDetail(scrollTop){
+  const { vm, tab } = arcD;
+  const tabs = [
+    ['overview', '概覽', null],
+    ['matches', '賽程', vm.doneCount],
+    ['players', vm.isTeam ? '隊伍' : '選手', vm.playerList.length]
+  ];
+  document.getElementById('archiveDetailTabs').innerHTML = tabs.map(([k, label, n]) =>
+    `<button type="button" role="tab" class="arc-tab" aria-selected="${k === tab}" data-t="${k}" onclick="arcSetTab(this.dataset.t)">${label}${n == null ? '' : `<span class="arc-tab-n">${n}</span>`}</button>`
+  ).join('');
+
+  const body = document.getElementById('archiveDetailBody');
+  if(tab === 'overview'){
+    body.innerHTML = arcOverviewHTML();
+  }else if(tab === 'matches'){
+    body.innerHTML = arcToolsHTML('搜尋選手名稱', arcD.q.matches) + `<div class="arc-chips${vm.groups.length < 2 ? ' hidden' : ''}" id="arcRoundChips">${arcRoundChipsHTML()}</div><div id="arcMatchList"></div>`;
+    arcRenderMatchList();
+  }else{
+    body.innerHTML = arcToolsHTML(vm.isTeam ? '搜尋隊伍名稱' : '搜尋選手名稱', arcD.q.players) + '<div id="arcPlayerList"></div>';
+    arcRenderPlayerList();
+  }
+  if(scrollTop) body.scrollTop = 0;
+}
+
+function arcSetTab(t){
+  if(!arcD || arcD.tab === t) return;
+  arcD.tab = t;
+  arcRenderDetail(true);
+}
+
+function arcToolsHTML(placeholder, value){
+  return `<div class="arc-tools"><div class="arc-field">${ARC_SEARCH_SVG}
+    <input id="arcQInput" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="${escapeAttr(placeholder)}" value="${escapeAttr(value)}" oninput="arcQuery(this.value)">
+    <button type="button" class="arc-clear${value ? '' : ' hidden'}" id="arcQClear" aria-label="清除搜尋" onclick="arcQuery('',true)">${ARC_CLEAR_SVG}</button>
+  </div></div>`;
+}
+
+function arcQuery(value, resetInput){
+  if(!arcD) return;
+  const tab = arcD.tab;
+  arcD.q[tab] = value || '';
+  const input = document.getElementById('arcQInput');
+  if(resetInput && input){ input.value = ''; input.focus(); }
+  document.getElementById('arcQClear').classList.toggle('hidden', !arcD.q[tab]);
+  if(tab === 'matches') arcRenderMatchList(); else arcRenderPlayerList();
+}
+
+/* ----- 概覽 ----- */
+function arcOverviewHTML(){
+  const { item, vm } = arcD;
+  let h = '';
+
+  if(item.champion){
+    h += `<section class="arc-sec"><div class="arc-champ"><div class="arc-champ-l">${icon('trophy', 16)}冠軍</div><div class="arc-champ-n">${escapeHtml(item.champion)}</div></div>`;
+    const pod = (label, name, cls) => `<div class="arc-pod ${cls}"><div class="arc-pod-l">${icon('medal', 14)}${label}</div><div class="arc-pod-n">${escapeHtml(name)}</div></div>`;
+    const cells = (item.runnerUp ? pod('亞軍', item.runnerUp, 'silver') : '') + (item.third ? pod('季軍', item.third, 'bronze') : '');
+    if(cells) h += `<div class="arc-pod2">${cells}</div>`;
+    h += '</section>';
+  }
+
+  const stats = [[vm.entrants, vm.isTeam ? '參賽隊伍' : '參賽選手'], [vm.doneCount, '完成場次']];
+  if(!vm.isTeam) stats.push([vm.totalPts, '總得分']);
+  h += `<div class="arc-stats" style="grid-template-columns:repeat(${stats.length},1fr);">${stats.map(([n, l]) => `<div class="arc-stat"><b>${n}</b><span>${l}</span></div>`).join('')}</div>`;
+
+  if(vm.finTotal > 0){
+    h += `<section class="arc-sec"><h3 class="arc-h">終結方式<small>共 ${vm.finTotal} 次得分</small></h3>`;
+    const finMax = Math.max(...Object.values(vm.fin));
+    Object.keys(vm.fin).forEach(k => {
+      const n = vm.fin[k];
+      const pct = finMax ? Math.round(n / finMax * 100) : 0;  // 以最多的那一項為滿格，長條才看得出差異
+      h += `<div class="arc-fin"><span class="arc-fin-l"><i>${FINISH[k].icon}</i>${FINISH[k].label}</span><span class="arc-bar"><i style="width:${pct}%"></i></span><span class="arc-fin-n">${n}</span></div>`;
+    });
+    h += '</section>';
+  }
+
+  h += `<section class="arc-sec arc-danger"><button type="button" class="btn btn-danger btn-block" data-id="${escapeAttr(item.id)}" onclick="deleteArchiveConfirm(this.dataset.id)">${icon('trash-2', 16)} 刪除這筆賽事紀錄</button></section>`;
+  return h;
+}
+
+/* ----- 賽程 ----- */
+function arcRoundChipsHTML(){
+  const { vm } = arcD;
+  const chip = (r, label, n) => `<button type="button" class="arc-chip" aria-pressed="${String(arcD.round) === String(r)}" data-r="${r}" onclick="arcSetRound(this.dataset.r)">${escapeHtml(label)}<small>${n}</small></button>`;
+  return chip('all', '全部', vm.doneCount) + vm.groups.map((g, i) => chip(i, g.label, g.matches.length)).join('');
+}
+
+function arcSetRound(r){
+  if(!arcD) return;
+  arcD.round = r === 'all' ? 'all' : Number(r);
+  document.getElementById('arcRoundChips').innerHTML = arcRoundChipsHTML();
+  arcRenderMatchList();
+}
+
+function arcMatchForced(){
+  return !!(arcD.q.matches.trim() || arcD.round !== 'all');
+}
+
+function arcMatchHTML(m, q){
+  const hitA = q && m.nA.toLowerCase().includes(q);
+  const hitB = q && m.nB.toLowerCase().includes(q);
+  const score = (v, win) => m.hasScore ? v : (win ? '勝' : '');
+  return `<div class="arc-m">
+    <div class="arc-m-r${m.winA ? ' is-win' : ''}${hitA ? ' hit' : ''}"><span class="arc-m-n">${escapeHtml(m.nA)}</span><b class="arc-m-s">${score(m.sA, m.winA)}</b></div>
+    <div class="arc-m-r${m.winB ? ' is-win' : ''}${hitB ? ' hit' : ''}"><span class="arc-m-n">${escapeHtml(m.nB)}</span><b class="arc-m-s">${score(m.sB, m.winB)}</b></div>
+  </div>`;
+}
+
+function arcRenderMatchList(){
+  const { vm } = arcD;
+  const listEl = document.getElementById('arcMatchList');
+  const q = arcD.q.matches.trim().toLowerCase();
+  const forced = arcMatchForced();
+  let shown = 0, html = '';
+
+  vm.groups.forEach((g, gi) => {
+    if(arcD.round !== 'all' && arcD.round !== gi) return;
+    const ms = q ? g.matches.filter(m => m.nA.toLowerCase().includes(q) || m.nB.toLowerCase().includes(q)) : g.matches;
+    if(!ms.length) return;
+    shown += ms.length;
+    const open = forced || arcD.open.has(g.key);
+    html += `<section class="arc-grp${open ? ' open' : ''}${forced ? ' forced' : ''}" id="arcG${gi}">
+      <button type="button" class="arc-grp-h" aria-expanded="${open}" onclick="arcToggleGroup(${gi})"><span>${escapeHtml(g.label)}</span><span class="arc-grp-n">${ms.length} 場</span>${ARC_CHEVRON}</button>
+      <div class="arc-grp-body">${ms.map(m => arcMatchHTML(m, q)).join('')}</div>
+    </section>`;
+  });
+
+  if(!shown){
+    const why = q ? `找不到包含「${escapeHtml(arcD.q.matches.trim())}」的比賽。` : '這場賽事沒有已完成的對戰紀錄。';
+    html = `<div class="arc-empty"><b>沒有符合的比賽</b><span>${why}</span></div>`;
+  }
+
+  const allOpen = vm.groups.every(g => arcD.open.has(g.key));
+  const action = forced
+    ? '<button type="button" class="arc-link" onclick="arcClearMatchFilters()">清除篩選</button>'
+    : (vm.groups.length > 1 ? `<button type="button" class="arc-link" onclick="arcToggleAll()">${allOpen ? '全部收合' : '全部展開'}</button>` : '');
+  listEl.innerHTML = `<div class="arc-count"><span>${forced ? `顯示 ${shown} 場，共 ${vm.doneCount} 場` : `共 ${vm.doneCount} 場`}</span>${action}</div>${html}`;
+}
+
+function arcToggleGroup(gi){
+  if(!arcD || arcMatchForced()) return;
+  const g = arcD.vm.groups[gi];
+  if(!g) return;
+  const sec = document.getElementById('arcG' + gi);
+  const open = !arcD.open.has(g.key);
+  if(open) arcD.open.add(g.key); else arcD.open.delete(g.key);
+  if(sec){
+    sec.classList.toggle('open', open);
+    sec.querySelector('.arc-grp-h').setAttribute('aria-expanded', String(open));
+  }
+  // 只更新上方「全部展開／收合」文字，不重畫列表，避免畫面跳動
+  const link = document.querySelector('#arcMatchList .arc-count .arc-link');
+  if(link) link.textContent = arcD.vm.groups.every(x => arcD.open.has(x.key)) ? '全部收合' : '全部展開';
+}
+
+function arcToggleAll(){
+  if(!arcD) return;
+  const all = arcD.vm.groups.every(g => arcD.open.has(g.key));
+  arcD.open = new Set(all ? [] : arcD.vm.groups.map(g => g.key));
+  arcRenderMatchList();
+}
+
+function arcClearMatchFilters(){
+  if(!arcD) return;
+  arcD.q.matches = '';
+  arcD.round = 'all';
+  const input = document.getElementById('arcQInput');
+  if(input) input.value = '';
+  document.getElementById('arcQClear').classList.add('hidden');
+  document.getElementById('arcRoundChips').innerHTML = arcRoundChipsHTML();
+  arcRenderMatchList();
+}
+
+/* ----- 選手／隊伍 ----- */
+function arcRenderPlayerList(){
+  const { vm } = arcD;
+  const listEl = document.getElementById('arcPlayerList');
+  const raw = arcD.q.players.trim();
+  const q = raw.toLowerCase();
+  const list = q ? vm.playerList.filter(p => p.name.toLowerCase().includes(q)) : vm.playerList;
+  const label = vm.isTeam ? '隊伍' : '選手';
+
+  let html = `<div class="arc-count"><span>${q ? `符合 ${list.length}，共 ${vm.playerList.length}` : `共 ${vm.playerList.length}`}　點${label}看全部比賽</span></div>`;
+  if(!list.length){
+    listEl.innerHTML = html + `<div class="arc-empty"><b>找不到${label}</b><span>沒有名稱包含「${escapeHtml(raw)}」。</span></div>`;
+    return;
+  }
+  html += `<div class="arc-p-head"><span></span><span>${label}</span><span>勝</span><span>敗</span><span>得失分</span></div>`;
+  list.forEach(p => {
+    const rk = p.rank <= 3 ? ` r${p.rank}` : '';
+    const dc = p.diff > 0 ? ' pos' : (p.diff < 0 ? ' neg' : '');
+    html += `<button type="button" class="arc-p" data-i="${p.rank - 1}" onclick="arcJumpToPlayer(this.dataset.i)">
+      <span class="arc-p-rank${rk}">${p.rank}</span><span class="arc-p-name">${escapeHtml(p.name)}</span>
+      <span class="arc-p-n">${p.w}</span><span class="arc-p-n">${p.l}</span><span class="arc-p-d${dc}">${p.diff > 0 ? '+' : ''}${p.diff}</span>
+    </button>`;
+  });
+  listEl.innerHTML = html;
+}
+
+function arcJumpToPlayer(i){
+  if(!arcD) return;
+  const p = arcD.vm.playerList[Number(i)];
+  if(!p) return;
+  arcD.q.matches = p.name;
+  arcD.round = 'all';
+  arcD.tab = 'matches';
+  arcRenderDetail(true);
 }
 
 function deleteArchiveConfirm(id){
   showConfirm('確定要刪除這筆封存紀錄嗎？此動作無法復原。', () => {
     window.cloudSync.deleteArchive(id).then(() => {
       showToast('已刪除');
-      refreshArchiveList();
+      hideArchiveDetailModal();
+      arcItems = arcItems.filter(i => i.id !== id);
+      arcRenderChips();
+      arcRenderLibraryList();
     }).catch(err => {
-      document.getElementById('archiveError').innerText = '刪除失敗，請稍後再試。';
+      showToast('刪除失敗，請稍後再試');
       console.error(err);
     });
   });
 }
+
+// Esc 關閉：先關詳情，再關賽事庫（有確認視窗在最上層時不處理）
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  const custom = document.getElementById('customModal');
+  if(custom && custom.classList.contains('show')) return;
+  const detail = document.getElementById('archiveDetailModal');
+  if(detail && detail.classList.contains('show')){ hideArchiveDetailModal(); return; }
+  const lib = document.getElementById('archiveModal');
+  if(lib && lib.classList.contains('show')) hideArchiveModal();
+});
+
 
 /* =========================================================
    AWARD REPORT (賽後頒獎戰報)
