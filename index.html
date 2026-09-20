@@ -5282,9 +5282,12 @@ window.addEventListener('cloudauth-changed', () => {
   openArchiveModal(intent === '1');
 });
 
-window.addEventListener('archive-redirect-error', () => {
-  try{ sessionStorage.removeItem(ARCHIVE_REDIRECT_INTENT_KEY); }catch(e){}
-  showToast('Google 登入未完成，請重試一次');
+window.addEventListener('archive-redirect-error', (e) => {
+  try{ sessionStorage.removeItem(ARCHIVE_REDIRECT_INTENT_KEY); }catch(e2){}
+  const err = e && e.detail;
+  openArchiveModal(false);
+  const el = document.getElementById('archiveAuthError');
+  if(el) el.innerText = describeAuthError(err);
 });
 
 function openArchiveModal(saveMode){
@@ -5356,6 +5359,19 @@ function refreshArchiveList(){
   });
 }
 
+function describeAuthError(err){
+  const code = (err && err.code) || '';
+  const known = {
+    'auth/operation-not-allowed': 'Firebase 專案還沒啟用 Google 登入方式（Authentication → Sign-in method → Google → 啟用）。',
+    'auth/unauthorized-domain': '目前這個網域沒有被加進 Firebase 的「授權網域」清單（Authentication → Settings → Authorized domains）。',
+    'auth/operation-not-supported-in-this-environment': '目前的瀏覽器環境不支援這個登入方式（常見於 LINE／IG／FB 內建瀏覽器），請改用系統瀏覽器（Safari／Chrome）開啟本頁再試一次。',
+    'auth/web-storage-unsupported': '目前的瀏覽器封鎖了第三方 cookie／儲存空間，Google 登入需要它才能運作，請確認瀏覽器設定或換一個瀏覽器再試。',
+    'auth/network-request-failed': '網路連線失敗，請確認網路狀況後再試一次。'
+  };
+  const friendly = known[code];
+  return friendly ? `${friendly}（${code}）` : `登入失敗：${code || (err && err.message) || '未知錯誤'}`;
+}
+
 function handleArchiveSignIn(){
   document.getElementById('archiveAuthError').innerText = '';
   try{ sessionStorage.setItem(ARCHIVE_REDIRECT_INTENT_KEY, archiveModalSaveMode ? '1' : '0'); }catch(e){}
@@ -5368,7 +5384,7 @@ function handleArchiveSignIn(){
   // setup failure (e.g. redirect blocked outright by the browser).
   window.cloudSync.auth.signIn().catch(err => {
     try{ sessionStorage.removeItem(ARCHIVE_REDIRECT_INTENT_KEY); }catch(e2){}
-    document.getElementById('archiveAuthError').innerText = '登入失敗，請再試一次。若是在 LINE／IG／FB 內建瀏覽器中，請改用系統瀏覽器（Safari／Chrome）開啟本頁。';
+    document.getElementById('archiveAuthError').innerText = describeAuthError(err);
     console.error(err);
     if(btn) btn.disabled = false;
     if(label) label.innerText = '使用 Google 帳號登入';
