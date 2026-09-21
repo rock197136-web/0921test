@@ -3369,6 +3369,10 @@ body::before{opacity:.42;}
 .arc-bar i{ display:block; height:100%; border-radius:inherit; background:var(--cyan); }
 .arc-fin-n{ text-align:right; font:700 15px 'Rajdhani',sans-serif; font-variant-numeric:tabular-nums; }
 .arc-danger{ padding-top:26px; }
+.arc-kv{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.07); font-size:14px; }
+.arc-kv span{ color:var(--muted); }
+.arc-kv b{ font:700 15px 'Noto Sans TC',sans-serif; font-variant-numeric:tabular-nums; text-align:right; }
+.arc-save-hint{ margin:10px 0 0; font-size:12.5px; color:var(--muted); text-align:center; }
 
 /* --- 賽事詳情：賽程（依輪次分組、可收合） --- */
 .arc-grp-h{
@@ -3450,7 +3454,7 @@ body::before{opacity:.42;}
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js");
         const {
           getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc,
-          onSnapshot, collection, writeBatch, serverTimestamp,
+          onSnapshot, collection, writeBatch, serverTimestamp, deleteField,
           query, where, limit
         } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
         const {
@@ -3599,16 +3603,35 @@ body::before{opacity:.42;}
           // saved under the signed-in referee's uid. Firestore security
           // rules should restrict each archive document to its ownerId.
           // -----------------------------------------------------------
+          // 資料分兩份存：
+          //   archives/{id}               → 「摘要」（名稱、冠軍、人數、封存時間…），列表只讀這份，很輕
+          //   archives/{id}/detail/main   → 「完整對戰資料」（players / matches），點進詳情才讀
+          // 若 Firestore 規則還沒開放 detail 這個子集合（permission-denied），
+          // 會自動退回舊的單一文件寫法，功能照常運作，只是列表還是比較重。
           async archiveEvent(payload){
             if(!currentUser) throw new Error('尚未登入');
+            const { players, matches, ...summary } = payload;
             const ref = doc(collection(db, 'archives'));
-            await setDoc(ref, {
-              ...payload,
+            const head = {
+              ...summary,
               ownerId: currentUser.uid,
               ownerName: currentUser.displayName || '',
               ownerEmail: currentUser.email || '',
-              archivedAt: serverTimestamp()
-            });
+              archivedAt: serverTimestamp()   // 封存時間由伺服器自動記錄，不受手機時鐘影響
+            };
+            try{
+              const batch = writeBatch(db);
+              batch.set(ref, { ...head, detailSplit: true });
+              batch.set(doc(db, 'archives', ref.id, 'detail', 'main'), { ownerId: currentUser.uid, players, matches });
+              await batch.commit();
+            }catch(err){
+              if(err && err.code === 'permission-denied'){
+                console.warn('detail 子集合尚未開放寫入，改用單一文件儲存。請更新 Firestore 規則以啟用分開儲存。');
+                await setDoc(ref, { ...head, players, matches, detailSplit: false });
+              }else{
+                throw err;
+              }
+            }
             return ref.id;
           },
 
@@ -3626,14 +3649,46 @@ body::before{opacity:.42;}
             return list;
           },
 
+          // 回傳「摘要 + 完整對戰資料」合併後的結果
           async getArchive(id){
             const snap = await getDoc(doc(db, 'archives', id));
-            return snap.exists() ? { id, ...snap.data() } : null;
+            if(!snap.exists()) return null;
+            const data = snap.data();
+            if(data.detailSplit === true){
+              const d = await getDoc(doc(db, 'archives', id, 'detail', 'main'));
+              const dd = d.exists() ? d.data() : {};
+              return { id, ...data, players: dd.players || [], matches: dd.matches || [] };
+            }
+            return { id, ...data };
+          },
+
+          // 把舊格式（players / matches 直接放在主文件）搬到 detail 子集合。
+          // 同一個 batch 一次完成：要嘛全部成功，要嘛完全不動，不會遺失資料。
+          async migrateArchive(item){
+            if(!currentUser) throw new Error('尚未登入');
+            const players = item.players || [];
+            const matches = item.matches || [];
+            const batch = writeBatch(db);
+            batch.set(doc(db, 'archives', item.id, 'detail', 'main'), { ownerId: currentUser.uid, players, matches });
+            batch.update(doc(db, 'archives', item.id), {
+              detailSplit: true,
+              playerNames: players.map(p => p.name),
+              players: deleteField(),
+              matches: deleteField()
+            });
+            await batch.commit();
           },
 
           async deleteArchive(id){
             if(!currentUser) throw new Error('尚未登入');
-            await deleteDoc(doc(db, 'archives', id));
+            const mainRef = doc(db, 'archives', id);
+            const snap = await getDoc(mainRef);
+            const batch = writeBatch(db);
+            if(snap.exists() && snap.data().detailSplit === true){
+              batch.delete(doc(db, 'archives', id, 'detail', 'main'));
+            }
+            batch.delete(mainRef);
+            await batch.commit();
           }
         };
         window.dispatchEvent(new Event('cloudsync-ready'));
@@ -4224,6 +4279,7 @@ body::before{opacity:.42;}
               <div class="field-label">賽事名稱（選填）</div>
               <input class="text-input" id="archiveTitleInput" placeholder="例如：秋季盃 第三站" autocomplete="off">
               <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="confirmSaveArchive()" id="archiveSaveBtn">儲存這場賽事</button>
+              <p class="arc-save-hint">儲存時會自動記下封存的日期與時間。</p>
             </div>
             <p class="arc-save-notice hidden" id="archiveSaveNotice">目前這場賽事還沒有產生冠軍。決賽結束後，再回到這裡就能儲存。</p>
           </section>
@@ -5551,13 +5607,25 @@ function arcDate(item){
   const ms = item.archivedAt && item.archivedAt.seconds ? item.archivedAt.seconds * 1000 : (item.completedAt || 0);
   return ms ? new Date(ms) : null;
 }
+const ARC_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+const arcHM = d => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+const arcYMD = d => `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+function arcSameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 function arcPrepare(item){
-  const names = (item.players || []).map(p => p.name).join(' ');
+  const names = (item.playerNames || (item.players || []).map(p => p.name)).join(' ');
   item._q = [item.title, item.champion, item.runnerUp, item.third, names].filter(Boolean).join(' ').toLowerCase();
   return item;
 }
 function arcLock(){ document.body.style.overflow = 'hidden'; }
 function arcUnlock(){ if(!document.querySelector('.arc-sheet.show')) document.body.style.overflow = ''; }
+
+/* 返回鍵：每打開一層就 pushState，按手機返回鍵／滑動返回只會關掉最上面那一層，不會離開網頁。
+   history.state.arcDepth：1 = 賽事庫、2 = 賽事詳情 */
+let arcHist = 0;
+function arcPushHistory(depth){
+  try{ history.pushState({ arcDepth: depth }, ''); arcHist = depth; }catch(e){ /* 不支援就退回一般行為 */ }
+}
+function arcIsShown(id){ const el = document.getElementById(id); return !!(el && el.classList.contains('show')); }
 
 function openArchiveModal(saveMode){
   archiveModalSaveMode = !!saveMode;
@@ -5576,16 +5644,29 @@ function openArchiveModal(saveMode){
   document.getElementById('archiveNotConfigured').classList.toggle('hidden', !notConfigured);
   document.getElementById('archiveConfigured').classList.toggle('hidden', notConfigured);
 
+  const wasOpen = arcIsShown('archiveModal');
   document.getElementById('archiveModal').classList.add('show');
   document.getElementById('archiveScroll').scrollTop = 0;
   arcLock();
+  if(!wasOpen) arcPushHistory(1);
   if(!notConfigured) renderArchiveModal();
 }
 
-function hideArchiveModal(){
-  hideArchiveDetailModal();
+function arcCloseLibNow(){
+  arcCloseDetailNow();
   document.getElementById('archiveModal').classList.remove('show');
+  arcHist = 0;
   arcUnlock();
+}
+
+function hideArchiveModal(){
+  if(!arcIsShown('archiveModal')) return;
+  if(arcHist >= 1){
+    history.go(-arcHist);                                   // 交給 popstate 收尾
+    setTimeout(() => { if(arcIsShown('archiveModal')) arcCloseLibNow(); }, 350);   // 保險：萬一沒觸發
+    return;
+  }
+  arcCloseLibNow();
 }
 
 function renderArchiveModal(){
@@ -5624,6 +5705,30 @@ function arcRenderSaveSection(){
   if(!titleInput.value) titleInput.value = state.tournament.name || '';
 }
 
+// 舊格式的封存（完整對戰資料直接放在主文件）→ 背景自動搬成「摘要 + 詳情」兩份。
+// 每筆都是原子操作；若 Firestore 規則不允許就停止，不影響使用。
+let arcMigrating = false, arcMigrateBlocked = false;
+function arcMigrateLegacy(){
+  if(arcMigrating || arcMigrateBlocked || !window.cloudSync.migrateArchive) return;
+  const legacy = arcItems.filter(i => Array.isArray(i.matches) && i.detailSplit !== true);
+  if(!legacy.length) return;
+  arcMigrating = true;
+  (async () => {
+    for(const item of legacy){
+      try{
+        await window.cloudSync.migrateArchive(item);
+        item.detailSplit = true;
+        item.playerNames = (item.players || []).map(p => p.name);
+      }catch(err){
+        console.warn('舊封存資料搬移失敗（已跳過，資料未變動）：', err);
+        if(err && err.code === 'permission-denied') arcMigrateBlocked = true;
+        break;
+      }
+    }
+    arcMigrating = false;
+  })();
+}
+
 function arcSkeleton(){
   return '<div class="arc-skel" aria-hidden="true">' + '<div><i></i><i></i></div>'.repeat(5) + '</div>';
 }
@@ -5640,6 +5745,7 @@ function refreshArchiveList(){
     document.getElementById('archiveError').innerHTML = '';
     arcRenderChips();
     arcRenderLibraryList();
+    arcMigrateLegacy();
   }).catch(err => {
     console.error(err);
     if(!arcLoaded) listEl.innerHTML = '';
@@ -5688,7 +5794,7 @@ function arcLibMore(){
 
 function arcRowHTML(item){
   const d = arcDate(item);
-  const dateTxt = d ? `${d.getMonth() + 1}/${d.getDate()}` : '';
+  const dateTxt = d ? `${d.getMonth() + 1}/${d.getDate()} ${arcHM(d)}` : '';   // 封存時間（到分鐘）
   const f = item.format || 'knockout';
   const champ = item.champion
     ? `<span class="arc-row-champ">${icon('trophy', 14)}<span>${escapeHtml(item.champion)}</span></span>`
@@ -5805,6 +5911,7 @@ function buildArchivePayload(title){
     champion: awardData.champion || null,
     runnerUp: awardData.silver || null,
     third: awardData.bronze || null,
+    playerNames: state.players.map(p => p.name),   // 列表搜尋選手用（摘要裡就有，不必讀完整資料）
     players: state.players,
     matches: state.matches,
     originalEventCode: (typeof currentEventCode !== 'undefined' && currentEventCode) ? currentEventCode : null,
@@ -5836,19 +5943,55 @@ function confirmSaveArchive(){
 }
 
 /* ---------- 賽事詳情 ---------- */
+const arcDetailCache = new Map();   // 已讀過的完整資料，重複打開不用再讀
+function arcCacheDetail(item){
+  arcDetailCache.set(item.id, item);
+  if(arcDetailCache.size > 8) arcDetailCache.delete(arcDetailCache.keys().next().value);
+}
+
 function viewArchive(id){
-  const cached = arcItems.find(i => i.id === id);
-  if(cached){ renderArchiveDetail(cached); return; }
-  window.cloudSync.getArchive(id).then(item => {
-    if(!item){
-      document.getElementById('archiveError').innerText = '找不到這筆封存紀錄。';
-      return;
-    }
-    renderArchiveDetail(arcPrepare(item));
+  const summary = arcItems.find(i => i.id === id);
+  if(summary && Array.isArray(summary.matches)){ renderArchiveDetail(summary); return; }   // 舊格式：資料本來就在
+  if(arcDetailCache.has(id)){ renderArchiveDetail(arcDetailCache.get(id)); return; }
+
+  arcOpenDetailLoading(id, summary);
+  window.cloudSync.getArchive(id).then(full => {
+    if(!arcD || arcD.loadingId !== id) return;              // 使用者已經離開這一頁
+    if(!full){ arcShowDetailError(id, '找不到這筆封存紀錄。'); return; }
+    const item = arcPrepare(full);
+    arcCacheDetail(item);
+    renderArchiveDetail(item);
   }).catch(err => {
-    document.getElementById('archiveError').innerText = '讀取失敗，請稍後再試。';
     console.error(err);
+    if(arcD && arcD.loadingId === id) arcShowDetailError(id, '讀取失敗，請檢查網路後再試。');
   });
+}
+
+function arcSetDetailHeader(item){
+  document.getElementById('archiveDetailTitle').textContent = item.title || '未命名賽事';
+  const d = arcDate(item);
+  const when = d ? `${arcYMD(d)} ${arcHM(d)} 封存` : '';
+  document.getElementById('archiveDetailSub').textContent = `${when}　${arcFormatLabel(item.format || 'knockout')}`.trim();
+}
+
+function arcOpenDetailLoading(id, summary){
+  arcD = { loadingId: id };
+  arcSetDetailHeader(summary || {});
+  document.getElementById('archiveDetailTabs').innerHTML = '';
+  document.getElementById('archiveDetailBody').innerHTML = arcSkeleton();
+  arcShowDetailSheet();
+}
+
+function arcShowDetailError(id, msg){
+  document.getElementById('archiveDetailBody').innerHTML =
+    `<div class="arc-empty"><b>${escapeHtml(msg)}</b><button type="button" class="btn btn-dark" data-id="${escapeAttr(id)}" onclick="viewArchive(this.dataset.id)">重新載入</button></div>`;
+}
+
+function arcShowDetailSheet(){
+  const wasOpen = arcIsShown('archiveDetailModal');
+  document.getElementById('archiveDetailModal').classList.add('show');
+  arcLock();
+  if(!wasOpen) arcPushHistory(2);
 }
 
 // 把一份封存資料整理成畫面要用的樣子（分輪次、選手戰績、終結方式統計）
@@ -5905,6 +6048,10 @@ function arcBuildVM(item){
   });
 
   // 淘汰賽：決賽排最前面；循環賽：第 1 輪排最前面
+  const stamps = done.map(m => Number(m.completedAt)).filter(t => t > 0);
+  const firstDone = stamps.length ? new Date(Math.min(...stamps)) : null;
+  const lastDone = stamps.length ? new Date(Math.max(...stamps)) : null;
+
   const groups = [...groupMap.values()].sort((x, y) => (isKO || isDE) ? y.ord - x.ord : x.ord - y.ord);
 
   const podium = [item.champion, item.runnerUp, item.third];
@@ -5914,7 +6061,7 @@ function arcBuildVM(item){
     .sort((x, y) => podiumRank(x.name) - podiumRank(y.name) || y.w - x.w || y.diff - x.diff || x.name.localeCompare(y.name, 'zh-Hant'));
   playerList.forEach((p, i) => { p.rank = i + 1; });
 
-  return { fmt, isTeam, isDE, isKO, groups, playerList, doneCount:done.length, totalPts, fin, finTotal,
+  return { fmt, isTeam, isDE, isKO, groups, playerList, doneCount:done.length, totalPts, fin, finTotal, firstDone, lastDone,
            entrants: item.playerCount || players.filter(p => !p.withdrawn).length };
 }
 
@@ -5927,21 +6074,36 @@ function renderArchiveDetail(item){
     round: 'all',
     open: new Set(vm.groups.length ? [vm.groups[0].key] : [])
   };
-  document.getElementById('archiveDetailTitle').textContent = item.title || '未命名賽事';
-  const d = arcDate(item);
-  const dateTxt = d ? `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}` : '';
-  document.getElementById('archiveDetailSub').textContent = `${dateTxt}　${arcFormatLabel(vm.fmt)}`;
+  arcSetDetailHeader(item);
   arcRenderDetail(true);
-  document.getElementById('archiveDetailModal').classList.add('show');
-  arcLock();
+  arcShowDetailSheet();
 }
 
-function hideArchiveDetailModal(){
+function arcCloseDetailNow(){
   const el = document.getElementById('archiveDetailModal');
   if(el) el.classList.remove('show');
   arcD = null;
+  arcHist = arcIsShown('archiveModal') ? 1 : 0;
   arcUnlock();
 }
+
+function hideArchiveDetailModal(){
+  if(!arcIsShown('archiveDetailModal')){ arcD = null; return; }
+  if(arcHist >= 2){
+    history.back();                                          // 交給 popstate 收尾
+    setTimeout(() => { if(arcIsShown('archiveDetailModal')) arcCloseDetailNow(); }, 350);   // 保險：萬一沒觸發
+    return;
+  }
+  arcCloseDetailNow();
+}
+
+// 手機返回鍵／滑動返回：依歷史深度關掉最上面那一層
+window.addEventListener('popstate', e => {
+  const depth = (e.state && e.state.arcDepth) || 0;
+  if(depth < 2 && arcIsShown('archiveDetailModal')) arcCloseDetailNow();
+  if(depth < 1 && arcIsShown('archiveModal')) arcCloseLibNow();
+  arcHist = arcIsShown('archiveDetailModal') ? 2 : (arcIsShown('archiveModal') ? 1 : 0);
+});
 
 function arcRenderDetail(scrollTop){
   const { vm, tab } = arcD;
@@ -5968,7 +6130,7 @@ function arcRenderDetail(scrollTop){
 }
 
 function arcSetTab(t){
-  if(!arcD || arcD.tab === t) return;
+  if(!arcD || !arcD.vm || arcD.tab === t) return;
   arcD.tab = t;
   arcRenderDetail(true);
 }
@@ -6006,6 +6168,16 @@ function arcOverviewHTML(){
   const stats = [[vm.entrants, vm.isTeam ? '參賽隊伍' : '參賽選手'], [vm.doneCount, '完成場次']];
   if(!vm.isTeam) stats.push([vm.totalPts, '總得分']);
   h += `<div class="arc-stats" style="grid-template-columns:repeat(${stats.length},1fr);">${stats.map(([n, l]) => `<div class="arc-stat"><b>${n}</b><span>${l}</span></div>`).join('')}</div>`;
+
+  const saved = arcDate(item);
+  const kv = [];
+  if(saved) kv.push(['封存時間', `${arcYMD(saved)}（${ARC_WEEK[saved.getDay()]}）${arcHM(saved)}`]);
+  const stampTxt = d => (saved && arcSameDay(d, saved)) ? arcHM(d) : `${d.getMonth() + 1}/${d.getDate()} ${arcHM(d)}`;
+  if(vm.firstDone) kv.push(['首場完賽', stampTxt(vm.firstDone)]);
+  if(vm.lastDone && vm.firstDone && vm.lastDone.getTime() !== vm.firstDone.getTime()) kv.push(['最後完賽', stampTxt(vm.lastDone)]);
+  if(kv.length){
+    h += `<section class="arc-sec"><h3 class="arc-h">時間</h3>${kv.map(([k, v]) => `<div class="arc-kv"><span>${k}</span><b>${v}</b></div>`).join('')}</section>`;
+  }
 
   if(vm.finTotal > 0){
     h += `<section class="arc-sec"><h3 class="arc-h">終結方式<small>共 ${vm.finTotal} 次得分</small></h3>`;
@@ -6155,6 +6327,7 @@ function deleteArchiveConfirm(id){
   showConfirm('確定要刪除這筆封存紀錄嗎？此動作無法復原。', () => {
     window.cloudSync.deleteArchive(id).then(() => {
       showToast('已刪除');
+      arcDetailCache.delete(id);
       hideArchiveDetailModal();
       arcItems = arcItems.filter(i => i.id !== id);
       arcRenderChips();
