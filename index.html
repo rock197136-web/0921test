@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>BEYBLADE X 對戰系統 V3.12</title>
+<title>BEYBLADE X 對戰系統 V3.13</title>
 <meta name="description" content="BEYBLADE X 對戰系統：即時戰況、對戰紀錄與賽事管理。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rock197136-web.github.io/BX/?share=v5">
@@ -1598,7 +1598,7 @@ td.name{ text-align:left; font-family:'Inter',sans-serif; font-weight:700; font-
 }
 .cloud-tab.active{ background:var(--panel); color:var(--text); }
 .cloud-code-display{
-  font-family:'Space Mono',monospace; font-size:26px; font-weight:700; letter-spacing:6px;
+  font-family:'Inter','Noto Sans TC',-apple-system,sans-serif; font-size:26px; font-weight:700; letter-spacing:6px;
   text-align:center; background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
   padding:12px; color:var(--cyan);
 }
@@ -1620,16 +1620,16 @@ td.name{ text-align:left; font-family:'Inter',sans-serif; font-weight:700; font-
    AWARD REPORT (賽後頒獎戰報) — standalone "poster" design,
    scoped entirely under .award-* so it never collides with
    the app's own .podium-name / .champ-name / .sys-tag / .trophy
-   classes used elsewhere. Built as a fixed 1080x1600 canvas
-   (phone-screen portrait ratio) that gets CSS-scaled down for
+   classes used elsewhere. Built as a compact 1080x1200 canvas
+   (9:10 social portrait ratio) that gets CSS-scaled down for
    on-screen preview; html2canvas grabs it at native resolution
    (transform reset to none) for export.
 ========================================================= */
 .award-modal-box{ max-width:480px; }
 .award-stage-wrap{ width:100%; display:flex; justify-content:center; overflow:hidden; }
-.award-stage{ width:1080px; height:1600px; transform-origin:top center; }
+.award-stage{ width:1080px; height:1200px; transform-origin:top center; }
 .award-poster{
-  position:relative; width:1080px; height:1600px; overflow:hidden;
+  position:relative; width:1080px; height:1200px; overflow:hidden;
   background:
     radial-gradient(900px 600px at 50% -8%, rgba(255,201,138,.14), transparent 60%),
     radial-gradient(700px 500px at 100% 110%, rgba(0,195,255,.08), transparent 60%),
@@ -1661,38 +1661,55 @@ td.name{ text-align:left; font-family:'Inter',sans-serif; font-weight:700; font-
 .award-corner span:nth-child(2){ width:34px; height:2px; top:14px; left:0; opacity:.55; }
 .award-corner span:nth-child(3){ width:2px; height:34px; top:0; left:14px; opacity:.55; }
 .award-corner span:nth-child(4){ width:7px; height:7px; top:24px; left:24px; opacity:.9; background:#ffd27a; box-shadow:0 0 10px rgba(255,201,138,.8); border-radius:50%; }
-.award-band{ position:relative; z-index:1; padding:54px 60px 0; text-align:center; flex:0 0 auto; }
+.award-band{ position:relative; z-index:1; padding:34px 60px 0; text-align:center; flex:0 0 auto; }
 .award-sys-tag{
-  font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:500; letter-spacing:.35em;
+  font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:500; letter-spacing:.35em;
   color:#ffc98a; text-transform:uppercase; display:inline-flex; align-items:center; gap:10px;
 }
 .award-sys-tag .award-dot{ width:8px; height:8px; border-radius:50%; background:#ff9d42; box-shadow:0 0 10px rgba(255,157,66,.8); }
-.award-wordmark{
-  margin-top:14px; font-family:'Rajdhani',sans-serif; font-weight:800; font-size:34px; letter-spacing:2px;
-  background:linear-gradient(90deg,#fff 0%, #ff9d42 45%, #ff4726 88%);
-  -webkit-background-clip:text; background-clip:text; color:transparent;
+/* 賽事名稱：實色文字（不再用漸層裁切），避免中文字型未載入完成時，
+   html2canvas 擷取到裁切遮罩卻抓不到字形，畫面呈現一整塊色塊而非文字。 */
+.award-tname{
+  margin-top:12px; font-family:'Rajdhani',sans-serif; font-weight:800; font-size:40px; line-height:1.16; letter-spacing:.03em;
+  text-transform:uppercase; overflow-wrap:break-word; text-align:center;
+  color:#ffdda3; text-shadow:0 0 16px rgba(255,201,138,.4);
 }
-.award-hr-thin{ margin:24px auto 0; width:520px; height:1px; background:linear-gradient(90deg, transparent, rgba(255,201,138,.55), transparent); }
-.award-champ-block{ position:relative; z-index:1; flex:0 0 680px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:24px 50px 12px; min-height:0; }
-.award-trophy{ width:184px; height:184px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.72)); }
+.award-meta-row{ display:flex; align-items:center; justify-content:center; gap:18px; margin-top:16px; flex-wrap:wrap; }
+.award-format-pill{
+  display:inline-flex; align-items:center; justify-content:center; gap:14px; min-height:40px; padding:0 20px;
+  border:1px solid rgba(255,190,102,.32); background:rgba(255,157,66,.07); color:#f4c88e;
+  font-family:'Noto Sans TC',sans-serif; font-size:17px; font-weight:800; letter-spacing:.08em;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+}
+.award-format-pill small{ color:#8f8172; font:600 14px/1 'IBM Plex Mono',monospace; letter-spacing:.18em; }
+.award-format-mark{ width:20px; height:20px; display:block; color:#ffae55; }
+.award-format-mark path{ fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.award-tdate{ font-family:'IBM Plex Mono',monospace; font-size:16px; letter-spacing:.22em; color:#8a8a8a; }
+.award-hr-thin{ margin:16px auto 0; width:560px; height:1px; background:linear-gradient(90deg, transparent, rgba(255,201,138,.55), transparent); }
+/* 冠軍區：改為橫向主視覺卡（獎盃＋名稱同一列），取代原本固定 440px 的
+   直式置中欄位，大幅縮減上下留白，也不再依賴海報整體高度撐開版面。 */
+.award-champ-card{
+  position:relative; z-index:1; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  gap:34px; padding:26px 70px; min-height:0;
+}
+.award-trophy{ width:118px; height:118px; flex-shrink:0; filter:drop-shadow(0 10px 14px rgba(0,0,0,.72)); }
 .award-trophy svg{ width:100%; height:100%; display:block; }
-.award-champ-name{
-  margin-top:8px; padding:10px 8px 7px; font-family:'Rajdhani',sans-serif; font-weight:900; font-size:86px; line-height:1.16;
-  text-align:center; max-width:960px; overflow:visible; overflow-wrap:break-word;
-  background:linear-gradient(180deg,#fff6df 0%, #ffd875 22%, #e8a93e 48%, #fff2c9 62%, #c98a2e 100%);
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-  filter:drop-shadow(0 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 30px rgba(255,200,90,.25));
-}
+.award-champ-text{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; }
 .award-champ-label{
-  margin-top:6px; font-family:'Rajdhani',sans-serif; font-weight:800; font-size:30px; letter-spacing:.6em;
-  color:#fff; text-shadow:0 0 18px rgba(255,215,140,.6);
+  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:22px; letter-spacing:.5em;
+  color:#ffd98a; text-shadow:0 0 14px rgba(255,215,140,.5);
+}
+.award-champ-name{
+  margin-top:2px; font-family:'Rajdhani',sans-serif; font-weight:900; font-size:64px; line-height:1.12;
+  text-align:left; max-width:760px; overflow-wrap:break-word;
+  color:#f2d98a; text-shadow:0 3px 0 rgba(0,0,0,.55), 0 0 26px rgba(255,200,90,.3);
 }
 .award-podium-row{
   position:relative; z-index:1; flex:0 0 auto; display:flex; align-items:stretch; justify-content:center;
-  gap:24px; padding:0 60px; margin-top:-12px;
+  gap:22px; padding:0 64px; margin-top:0;
 }
 .award-podium-card{
-  flex:1; max-width:420px; border-radius:20px; padding:24px 20px 22px; text-align:center;
+  flex:1; max-width:420px; border-radius:16px; padding:17px 20px 18px; text-align:center;
   position:relative; overflow:hidden;
   background:linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
   border:1px solid rgba(255,255,255,.12);
@@ -1708,45 +1725,40 @@ td.name{ text-align:left; font-family:'Inter',sans-serif; font-weight:700; font-
   content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
   box-shadow:0 0 0 1px rgba(255,255,255,.04) inset, 0 1px 0 rgba(255,255,255,.08) inset;
 }
-.award-medal{ width:108px; height:119px; margin:0 auto 8px; filter:drop-shadow(0 7px 12px rgba(0,0,0,.5)); }
+.award-medal{ width:78px; height:86px; margin:0 auto 5px; filter:drop-shadow(0 7px 12px rgba(0,0,0,.5)); }
 .award-medal svg{ width:100%; height:100%; display:block; }
 .award-podium-rank{
-  font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; letter-spacing:.2em;
-  color:var(--award-medal-color); text-transform:uppercase; margin-bottom:8px;
+  font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:600; letter-spacing:.18em;
+  color:var(--award-medal-color); text-transform:uppercase; margin-bottom:5px;
 }
-.award-podium-name{ font-family:'Rajdhani',sans-serif; font-weight:800; font-size:40px; line-height:1.12; color:#f4f4f4; overflow-wrap:break-word; }
-.award-stats-strip{ position:relative; z-index:1; flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:0; margin:28px 0 0; padding:0 60px; }
+.award-podium-name{ font-family:'Rajdhani',sans-serif; font-weight:800; font-size:38px; line-height:1.1; color:#f4f4f4; overflow-wrap:break-word; }
+.award-stats-strip{ position:relative; z-index:1; flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:0; margin:24px 0 0; padding:0 60px; }
 .award-stat-cell{ text-align:center; padding:0 44px; }
 .award-stat-divider{ width:1px; height:46px; background:linear-gradient(180deg, transparent, rgba(255,255,255,.18), transparent); }
-.award-stat-num{ font-family:'Space Mono',monospace; font-weight:700; font-size:44px; color:#fff; }
-.award-stat-cap{ margin-top:6px; font-family:'Space Grotesk',sans-serif; font-size:17px; letter-spacing:.3em; color:#8a8a8a; text-transform:uppercase; }
+.award-stat-num{ font-family:'Space Mono',monospace; font-weight:700; font-size:38px; color:#fff; }
+.award-stat-cap{ margin-top:4px; font-family:'Space Grotesk',sans-serif; font-size:15px; letter-spacing:.28em; color:#8a8a8a; text-transform:uppercase; }
 
-/* Footer is the event's "signature" — the tournament name is the biggest
-   text on this whole card after the champion's name, since that's what
-   the poster gets shared for: which event this result belongs to. */
-.award-footer{ position:relative; z-index:1; flex:0 0 auto; margin-top:auto; padding:28px 60px 36px; text-align:center; }
+/* Footer now only carries the app brand tag — the tournament name and date
+   moved up to the top band, so this stays a short closing line rather than
+   the tall "signature" block the old bottom-heavy layout needed. */
+.award-footer{ position:relative; z-index:1; flex:0 0 auto; margin-top:auto; padding:16px 60px 26px; text-align:center; }
 .award-footer-divider{
   width:100%; height:1px;
   background:repeating-linear-gradient(90deg, rgba(255,255,255,.25) 0 14px, transparent 14px 22px);
-  margin-bottom:24px; opacity:.5;
+  margin-bottom:14px; opacity:.5;
 }
-.award-tname{
-  font-family:'Rajdhani',sans-serif; font-weight:800; font-size:50px; line-height:1.15; letter-spacing:.04em;
-  text-transform:uppercase; overflow-wrap:break-word;
-  background:linear-gradient(90deg,#fff 0%, #ffc98a 50%, #ff9d5c 100%);
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-}
-.award-tdate{ margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:18px; letter-spacing:.25em; color:#8a8a8a; }
-.award-brand{ margin-top:18px; font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:.35em; color:#4a4a4a; text-transform:uppercase; }
+.award-brand{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:.32em; color:#4a4a4a; text-transform:uppercase; }
 @media (max-width:600px){
   .award-modal-box{ max-width:94vw; padding:18px; }
 }
 
-.qr-modal-box{ text-align:center; }
+.qr-modal-box{ text-align:center; max-height:calc(100vh - 40px); max-height:calc(100dvh - 40px); overflow-y:auto; }
 .qr-code-wrap{
-  background:#fff; border-radius:12px; padding:14px; display:inline-flex;
-  align-items:center; justify-content:center; margin:6px 0 14px;
+  background:#fff; border-radius:12px; padding:14px 14px 12px; display:inline-flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px; margin:6px 0 14px;
 }
+.qr-event-code{ color:#3c4148; font:700 14px/1.2 'Noto Sans TC',sans-serif; letter-spacing:.02em; white-space:nowrap; }
+.qr-event-code b{ color:#111; font:700 26px/1 'Inter','Noto Sans TC',-apple-system,sans-serif; letter-spacing:.16em; margin-left:2px; }
 .qr-code-render{ display:grid; place-items:center; width:220px; height:220px; }
 .qr-code-render canvas,.qr-code-render img{ display:block; width:220px!important; height:220px!important; image-rendering:pixelated; }
 .qr-code-render-status{ display:grid; place-items:center; width:220px; height:220px; padding:18px; color:#3c4148; font-size:12px; font-weight:800; line-height:1.5; }
@@ -3277,6 +3289,38 @@ body::before{opacity:.42;}
 .arc-note{ margin:0 0 16px; font-size:14px; line-height:1.75; color:var(--muted); }
 .arc-error{ padding:0 18px; margin-top:12px; font-size:13px; line-height:1.6; color:#ff8f8f; }
 .arc-error:empty{ display:none; }
+.arc-import{ margin:14px 16px 0; border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.arc-import-toggle{ width:100%; min-height:60px; padding:10px 14px; display:flex; align-items:center; gap:12px; text-align:left; background:transparent; border:0; color:var(--text); }
+.arc-imp-ico{ flex:0 0 38px; width:38px; height:38px; display:grid; place-items:center; border-radius:10px; border:1px solid rgba(255,159,36,.45); background:rgba(255,159,36,.08); color:var(--cyan); }
+.arc-imp-txt{ flex:1; min-width:0; }
+.arc-imp-txt b{ display:block; font:700 15px 'Noto Sans TC',sans-serif; }
+.arc-imp-txt small{ display:block; margin-top:2px; font-size:12.5px; line-height:1.5; color:var(--muted); }
+.arc-imp-chev{ flex:0 0 auto; color:var(--muted); transition:transform .2s; }
+.arc-import.open .arc-imp-chev{ transform:rotate(180deg); }
+.arc-import-panel{ padding:14px 14px 16px; border-top:1px solid var(--border); }
+.arc-imp-help{ margin:0 0 12px; font-size:14px; line-height:1.7; color:var(--muted); }
+.arc-imp-row{ display:flex; gap:10px; }
+.arc-imp-row input{
+  flex:1; min-width:0; height:50px; padding:0 8px 0 14px; border-radius:12px; border:1px solid var(--border);
+  background:var(--panel-2); color:var(--text); text-align:center; text-transform:uppercase;
+  font:700 22px 'Inter','Noto Sans TC',-apple-system,sans-serif; letter-spacing:.4em;
+}
+.arc-imp-row input::placeholder{ font:500 15px 'Noto Sans TC',sans-serif; letter-spacing:0; color:var(--muted); }
+.arc-imp-row .btn{ flex:0 0 88px; min-height:50px; }
+.arc-imp-err{ margin-top:10px; font-size:13.5px; line-height:1.65; color:#ff8f8f; }
+.arc-imp-err:empty{ display:none; }
+.arc-imp-card{ margin-top:14px; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--panel-2); }
+.arc-imp-name{ font:700 17px/1.4 'Noto Sans TC',sans-serif; overflow-wrap:anywhere; }
+.arc-imp-meta{ margin-top:4px; font-size:13px; line-height:1.7; color:var(--muted); }
+.arc-imp-pod{ margin:10px 0 12px; display:grid; gap:4px; font-size:14.5px; }
+.arc-imp-pod span{ color:var(--muted); display:inline-block; min-width:2.6em; }
+.arc-imp-pod b{ font-weight:700; }
+.arc-imp-pod .g{ color:var(--champ-gold-soft); }
+.arc-imp-card .field-label{ margin-top:4px; }
+.arc-imp-card .text-input{ font-size:16px; }
+.arc-imp-note{ margin:10px 0 0; font-size:12.5px; line-height:1.65; color:var(--muted); }
+.arc-imp-bad{ margin-top:14px; padding:12px 14px; border:1px solid rgba(255,143,143,.5); border-radius:12px; font-size:14px; line-height:1.7; color:#ff8f8f; }
+.arc-warn{ margin:16px 0 0; font-size:14px; line-height:1.75; color:#ff8f8f; }
 .arc-link{
   background:none; border:0; padding:8px 6px; min-height:36px;
   color:var(--cyan-soft); font:600 13px 'Noto Sans TC',sans-serif; text-decoration:underline; text-underline-offset:3px;
@@ -3454,7 +3498,7 @@ body::before{opacity:.42;}
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js");
         const {
           getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc,
-          onSnapshot, collection, writeBatch, serverTimestamp, deleteField,
+          onSnapshot, collection, writeBatch, serverTimestamp, deleteField, runTransaction,
           query, where, limit
         } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
         const {
@@ -3530,6 +3574,46 @@ body::before{opacity:.42;}
 
           async createEvent(refCode, viewerCode, metaData){
             await setDoc(doc(db, 'events', refCode), { ...metaData, viewerCode, updatedAt: serverTimestamp() });
+          },
+
+          // 一次性讀取某場賽事（不加入、不訂閱）：給「用代碼匯入典藏」使用。
+          // 裁判代碼或選手代碼皆可；回傳 { role, eventCode, meta, matches }，找不到回傳 null。
+          async fetchEvent(codeEntered){
+            const found = await window.cloudSync.resolveCode(codeEntered);
+            if(!found) return null;
+            const snap = await getDocs(collection(db, 'events', found.eventCode, 'matches'));
+            const matches = [];
+            snap.forEach(d => matches.push(d.data()));
+            return { role: found.role, eventCode: found.eventCode, meta: found.data || {}, matches };
+          },
+
+          // 建立賽事並「保證」兩組代碼從沒被用過（原子操作，兩台裝置同時建立也不會撞）：
+          //   1. 代碼永久登記在 eventCodes/{代碼}：即使賽事之後被刪除，這組代碼也不會再發給新賽事
+          //   2. 同時檢查 events/{代碼} 是否已存在（涵蓋還沒登記過的舊賽事）
+          // 回傳 true = 建立成功；false = 代碼已被用過，呼叫端請換一組再試。
+          // 若 Firestore 規則還沒開放 eventCodes（permission-denied），退回一般建立，功能照常運作。
+          async createEventUnique(refCode, viewerCode, metaData){
+            try{
+              return await runTransaction(db, async tx => {
+                const regRef = doc(db, 'eventCodes', refCode);
+                const regView = doc(db, 'eventCodes', viewerCode);
+                const evRef = doc(db, 'events', refCode);
+                const evView = doc(db, 'events', viewerCode);
+                const snaps = await Promise.all([tx.get(regRef), tx.get(regView), tx.get(evRef), tx.get(evView)]);
+                if(snaps.some(sn => sn.exists())) return false;
+                tx.set(regRef, { kind: 'ref', createdAt: serverTimestamp() });
+                tx.set(regView, { kind: 'viewer', createdAt: serverTimestamp() });
+                tx.set(evRef, { ...metaData, viewerCode, updatedAt: serverTimestamp() });
+                return true;
+              });
+            }catch(err){
+              if(err && err.code === 'permission-denied'){
+                console.warn('eventCodes 尚未開放，改用一般建立（只能避開目前還存在的賽事代碼）。請更新 Firestore 規則。');
+                await setDoc(doc(db, 'events', refCode), { ...metaData, viewerCode, updatedAt: serverTimestamp() });
+                return true;
+              }
+              throw err;
+            }
           },
 
           join(code, onMeta, onMatches){
@@ -3736,7 +3820,7 @@ body::before{opacity:.42;}
       <span class="player-next-match-arrow" aria-hidden="true">›</span>
     </button>
     <div class="header-release-row">
-      <button class="version-info" type="button" onclick="openUpdateNotes()" aria-label="查看目前版本、更新日期與更新公告">V3.12 <span aria-hidden="true">·</span> 更新日期 26/9/20 <svg class="version-announcement" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3Z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></button>
+      <button class="version-info" type="button" onclick="openUpdateNotes()" aria-label="查看目前版本、更新日期與更新公告">V3.13 <span aria-hidden="true">·</span> 更新日期 26/9/21 <svg class="version-announcement" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3Z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></button>
     </div>
   </div>
 </header>
@@ -4023,12 +4107,12 @@ body::before{opacity:.42;}
       <div id="teamSetupSection" class="hidden">
         <div class="team-setup-head">
           <div>
-            <div class="field-label">參賽團體（至少 2 隊）</div>
+            <div class="field-label">參賽隊伍（至少 2 隊）</div>
             <div class="text-muted">每隊固定三名團員；團員編號僅供名單辨識，不代表實際出戰順序。</div>
           </div>
         </div>
         <div id="teamInputs" class="team-inputs"></div>
-        <button type="button" class="btn btn-dark team-add-btn" onclick="addTeamEntry()">＋ 新增團體</button>
+        <button type="button" class="btn btn-dark team-add-btn" onclick="addTeamEntry()">＋ 新增隊伍</button>
       </div>
 
       <div class="flex">
@@ -4193,7 +4277,7 @@ body::before{opacity:.42;}
 
       <div id="cloudPaneCreate">
         <div class="text-muted" style="font-size:12px; margin-bottom:12px;">
-          會產生兩組 3 碼代碼：一組給裁判用（完整功能），一組給選手／觀眾用（唯讀，只能看對戰紀錄與即時戰況）。
+          會產生兩組 4 碼代碼：一組給裁判用（完整功能），一組給選手／觀眾用（唯讀，只能看對戰紀錄與即時戰況）。
         </div>
         <div class="field-label">賽事名稱（選填）</div>
         <input class="text-input" id="cloudNewName" placeholder="例如：2026 校內盃">
@@ -4222,7 +4306,7 @@ body::before{opacity:.42;}
 
       <div id="cloudPaneJoin" class="hidden">
         <div class="field-label">輸入賽事代碼</div>
-        <input class="text-input" id="cloudJoinCode" placeholder="例如：A7K" style="text-transform:uppercase; letter-spacing:5px; text-align:center; font-weight:800;" maxlength="3">
+        <input class="text-input" id="cloudJoinCode" placeholder="例如：A7K9" style="text-transform:uppercase; letter-spacing:5px; text-align:center; font-weight:800;" maxlength="4">
         <div class="text-muted" style="font-size:12px; margin-top:6px;">裁判代碼或選手代碼皆可輸入，系統會自動判斷身分。</div>
         <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="handleJoinEvent()">加入這場賽事</button>
       </div>
@@ -4245,9 +4329,11 @@ body::before{opacity:.42;}
     <div class="modal-title"><span id="qrModalIcon"></span> 選手／觀眾連結 QR 碼</div>
     <div class="qr-code-wrap">
       <div class="qr-code-render" id="qrCodeRender" role="img" aria-label="選手／觀眾連結 QR 碼"></div>
+      <div class="qr-event-code" id="qrEventCode"></div>
     </div>
     <div class="qr-code-link" id="qrCodeLink"></div>
     <button class="btn btn-primary btn-block" id="qrCopyBtn" onclick="copyShareLink(currentQRCode, this)">複製連結</button>
+    <button class="btn btn-dark btn-block" style="margin-top:10px;" id="qrSaveBtn" onclick="saveQRImage(this)">儲存圖片</button>
     <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="hideQRModal()">關閉</button>
   </div>
 </div>
@@ -4273,6 +4359,7 @@ body::before{opacity:.42;}
         <div id="archiveSignedOut" class="arc-pad">
           <p class="arc-note">登入 Google 帳號後，就能把比賽結束的賽事存起來。之後換手機或電腦，登入就能查看每一場的對戰紀錄。不登入也能正常比賽，裁判和選手的代碼照常使用。</p>
           <button class="btn btn-primary btn-block" id="archiveSignInBtn" onclick="handleArchiveSignIn()"><span id="archiveSignInIcon" class="btn-icon-slot"></span> <span id="archiveSignInLabel">使用 Google 帳號登入</span></button>
+          <p class="arc-warn">請用 Safari 或 Chrome 開啟賽事典藏，不要在 LINE、IG 或 FB 的內建瀏覽器裡開，內建瀏覽器常不支援 Google 登入彈窗。</p>
           <div id="archiveAuthError" style="margin-top:10px; font-size:13px; color:#ff8f8f;"></div>
         </div>
 
@@ -4288,6 +4375,23 @@ body::before{opacity:.42;}
             </div>
             <p class="arc-save-notice hidden" id="archiveSaveNotice">這場比賽還沒有決出冠軍。決賽打完後，再回到這裡就能儲存。</p>
           </section>
+
+          <div class="arc-import" id="archiveImport">
+            <button type="button" class="arc-import-toggle" id="archiveImportToggle" aria-expanded="false" aria-controls="archiveImportPanel" onclick="arcToggleImport()">
+              <span class="arc-imp-ico" id="archiveImportIcon"></span>
+              <span class="arc-imp-txt"><b>用賽事代碼匯入</b><small>忘了儲存？輸入當時的代碼就能補存</small></span>
+              <svg class="arc-imp-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="arc-import-panel hidden" id="archiveImportPanel">
+              <p class="arc-imp-help">輸入當時的賽事代碼（現在是 4 碼，舊賽事是 3 碼；裁判代碼或選手代碼都可以），確認內容沒錯後，就能存進你的典藏。</p>
+              <div class="arc-imp-row">
+                <input id="archiveImportInput" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：A7K9" aria-label="賽事代碼" onkeydown="if(event.key==='Enter')arcImportLookup()" oninput="this.value=this.value.toUpperCase()">
+                <button type="button" class="btn btn-primary" id="archiveImportGo" onclick="arcImportLookup()">查詢</button>
+              </div>
+              <div class="arc-imp-err" id="archiveImportError" role="alert"></div>
+              <div id="archiveImportPreview" class="hidden"></div>
+            </div>
+          </div>
 
           <div class="arc-search" id="archiveSearchWrap">
             <div class="arc-field">
@@ -4337,11 +4441,19 @@ body::before{opacity:.42;}
 
           <div class="award-band">
             <div class="award-sys-tag"><span class="award-dot"></span>TOURNAMENT RESULTS</div>
-            <div class="award-wordmark">BEYBLADE X TOURNAMENT</div>
+            <div class="award-tname" id="awardTournamentName">TOURNAMENT NAME</div>
+            <div class="award-meta-row">
+              <div class="award-format-pill">
+                <svg class="award-format-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M5 19v-5h4v5M10 19V8h4v11M15 19v-8h4v8"/></svg>
+                <small>FORMAT</small>
+                <span id="awardFormatName">單淘汰</span>
+              </div>
+              <div class="award-tdate" id="awardDate">2026.09.07</div>
+            </div>
             <div class="award-hr-thin"></div>
           </div>
 
-          <div class="award-champ-block">
+          <div class="award-champ-card">
             <div class="award-trophy">
               <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -4381,8 +4493,10 @@ body::before{opacity:.42;}
                 <circle cx="30" cy="58" r="2.5" fill="#ffd27a" opacity=".7"/>
               </svg>
             </div>
-            <div class="award-champ-name" id="awardChampName">－</div>
-            <div class="award-champ-label">CHAMPION</div>
+            <div class="award-champ-text">
+              <div class="award-champ-label">CHAMPION</div>
+              <div class="award-champ-name" id="awardChampName">－</div>
+            </div>
           </div>
 
           <div class="award-podium-row">
@@ -4449,7 +4563,7 @@ body::before{opacity:.42;}
           <div class="award-stats-strip">
             <div class="award-stat-cell">
               <div class="award-stat-num" id="awardPlayerCount">0</div>
-              <div class="award-stat-cap">PLAYERS</div>
+              <div class="award-stat-cap" id="awardParticipantLabel">PLAYERS</div>
             </div>
             <div class="award-stat-divider"></div>
             <div class="award-stat-cell">
@@ -4460,8 +4574,6 @@ body::before{opacity:.42;}
 
           <div class="award-footer">
             <div class="award-footer-divider"></div>
-            <div class="award-tname" id="awardTournamentName">TOURNAMENT NAME</div>
-            <div class="award-tdate" id="awardDate">2026.09.07</div>
             <div class="award-brand">BEYBLADE X 對戰系統</div>
           </div>
         </div>
@@ -4713,6 +4825,7 @@ function initStaticIcons(){
     archiveEventIcon: 'cloud',
     archiveLibraryIcon: 'clock',
     archiveHeadingIcon: 'clock',
+    archiveImportIcon: 'download',
     archiveModalIcon: 'clock',
     archiveDetailIcon: 'medal',
     archiveSignInIcon: 'user'
@@ -4730,6 +4843,7 @@ function initStaticIcons(){
   setIconLabel('cloudResultViewerShareBtn', 'link', '複製選手連結', 14);
   setIconLabel('cloudResultQrBtn', 'qr-code', '生成QR碼', 14);
   setIconLabel('qrCopyBtn', 'link', '複製連結', 14);
+  setIconLabel('qrSaveBtn', 'download', '儲存圖片', 14);
   setIconLabel('awardDownloadBtn', 'download', '下載圖片', 14);
   const attendanceIcon = document.getElementById('attendanceToggleIcon');
   if(attendanceIcon) attendanceIcon.innerHTML = icon('clipboard-check', 18);
@@ -5534,10 +5648,12 @@ function renderQRCodeFallback(link){
 
 async function showQRCode(code){
   code = (code || '').trim().toUpperCase();
-  if(code.length !== 3) return;
+  if(!isValidEventCode(code)) return;
   currentQRCode = code;
   const link = buildShareLink(code);
   document.getElementById('qrCodeLink').innerText = link;
+  document.getElementById('qrEventCode').innerHTML = `賽事代碼 - <b>${escapeHtml(code)}</b>`;
+  try{ if(document.fonts && document.fonts.load){ document.fonts.load("700 96px Inter"); document.fonts.load("700 48px 'Noto Sans TC'"); } }catch(e){}   // 先載入字型，儲存圖片時才畫得出來
   document.getElementById('qrModal').classList.add('show');
   setQRCodeRenderStatus('正在產生 QR 碼…');
   try{
@@ -5555,6 +5671,75 @@ async function showQRCode(code){
     });
   }catch(e){
     if(currentQRCode === code) renderQRCodeFallback(link);
+  }
+}
+
+// 把「QR 碼 + 賽事代碼 - XXXX」合成一張圖片存起來（手機會跳出分享選單，選「儲存圖片」即可存到相簿；電腦則直接下載）
+async function saveQRImage(btn){
+  const code = currentQRCode;
+  const host = document.getElementById('qrCodeRender');
+  if(!code || !host) return;
+  // qrcode.js 會同時放 canvas 和 img；優先用 canvas（不會有跨網域限制），備援 QR 圖才用 img
+  const srcEl = host.querySelector('canvas') || host.querySelector('img');
+  if(!srcEl || (srcEl.tagName === 'IMG' && !srcEl.complete)){ showToast('請等 QR 碼出現後，再儲存圖片'); return; }
+
+  const label = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.textContent = '產生圖片中…'; }
+  try{
+    try{ await Promise.all([document.fonts.load('700 96px Inter'), document.fonts.load("700 48px 'Noto Sans TC'")]); }catch(e){}
+
+    const W = 900, PAD = 90, QR = 720;
+    const H = PAD + QR + 210;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, W, H);
+    g.imageSmoothingEnabled = false;              // QR 方塊邊緣要銳利，掃描才穩
+    g.drawImage(srcEl, PAD, PAD, QR, QR);
+
+    // 底下一行：賽事代碼 - XXXX（逐字繪製，字距一致、不依賴瀏覽器的 letterSpacing 支援）
+    const labelFont = "700 46px 'Noto Sans TC', -apple-system, sans-serif";
+    const codeFont = "700 92px Inter, 'Noto Sans TC', -apple-system, sans-serif";
+    const gapAfterLabel = 22, tracking = 16;
+    g.textBaseline = 'alphabetic';
+    g.font = labelFont;
+    const labelText = '賽事代碼 -';
+    const labelW = g.measureText(labelText).width;
+    g.font = codeFont;
+    const chars = code.split('');
+    const widths = chars.map(ch => g.measureText(ch).width);
+    const codeW = widths.reduce((a, b) => a + b, 0) + tracking * (chars.length - 1);
+    let x = (W - (labelW + gapAfterLabel + codeW)) / 2;
+    const baseY = PAD + QR + 135;
+    g.font = labelFont; g.fillStyle = '#3c4148';
+    g.fillText(labelText, x, baseY - 4);
+    x += labelW + gapAfterLabel;
+    g.font = codeFont; g.fillStyle = '#111111';
+    chars.forEach((ch, i) => { g.fillText(ch, x, baseY); x += widths[i] + tracking; });
+
+    const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+    if(!blob) throw new Error('toBlob failed');
+    const fileName = `beyblade-x-code-${code}.png`;   // 用英數檔名，各種手機／系統都不會亂碼
+    const file = new File([blob], fileName, { type:'image/png' });
+
+    // 手機：用系統分享選單（可直接「儲存圖片」到相簿）
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      try{ await navigator.share({ files:[file] }); return; }
+      catch(e){ if(e && e.name === 'AbortError') return; }   // 使用者取消就結束；其他錯誤改走下載
+    }
+    // 電腦／不支援分享：直接下載
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    showToast('已儲存圖片');
+  }catch(e){
+    console.error('儲存 QR 圖片失敗', e);
+    showToast('儲存圖片失敗，請改用螢幕截圖');
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerHTML = label || `${icon('download',14)} 儲存圖片`; }
   }
 }
 
@@ -5618,6 +5803,11 @@ const ARC_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 const arcHM = d => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 const arcYMD = d => `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 function arcSameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+// 列表排序、月份分組、每列日期：匯入的賽事用「賽事實際結束時間」，其他用封存時間
+function arcListDate(item){
+  if(item.eventAt) return new Date(item.eventAt);
+  return arcDate(item);
+}
 function arcPrepare(item){
   const names = (item.playerNames || (item.players || []).map(p => p.name)).join(' ');
   item._q = [item.title, item.champion, item.runnerUp, item.third, names].filter(Boolean).join(' ').toLowerCase();
@@ -5646,6 +5836,7 @@ function openArchiveModal(saveMode){
   arcLibQuery = ''; arcLibFormat = 'all'; arcLibLimit = ARC_PAGE;
   const si = document.getElementById('archiveSearchInput');
   if(si) si.value = '';
+  arcResetImport();
 
   const notConfigured = !(window.cloudSync && window.cloudSync.isConfigured && window.cloudSync.isConfigured() && window.cloudSync.ready && window.cloudSync.auth);
   document.getElementById('archiveNotConfigured').classList.toggle('hidden', !notConfigured);
@@ -5747,7 +5938,7 @@ function refreshArchiveList(){
     document.getElementById('archiveSummary').textContent = '';
   }
   window.cloudSync.listMyArchives().then(items => {
-    arcItems = items.map(arcPrepare);
+    arcItems = items.map(arcPrepare).sort((a, b) => ((arcListDate(b) || 0) - (arcListDate(a) || 0)));
     arcLoaded = true;
     document.getElementById('archiveError').innerHTML = '';
     arcRenderChips();
@@ -5800,7 +5991,7 @@ function arcLibMore(){
 }
 
 function arcRowHTML(item){
-  const d = arcDate(item);
+  const d = arcListDate(item);
   const dateTxt = d ? `${d.getMonth() + 1}/${d.getDate()} ${arcHM(d)}` : '';   // 封存時間（到分鐘）
   const f = item.format || 'knockout';
   const champ = item.champion
@@ -5820,7 +6011,7 @@ function arcRenderLibraryList(){
 
   if(!arcItems.length){
     sumEl.textContent = '';
-    listEl.innerHTML = '<div class="arc-empty"><b>還沒有存過賽事</b><span>比賽結束後，按「儲存到我的賽事典藏」，就會出現在這裡。</span></div>';
+    listEl.innerHTML = '<div class="arc-empty"><b>還沒有存過賽事</b><span>比賽結束後，按「儲存到我的賽事典藏」，就會出現在這裡。忘了存的話，也可以用上面的「用賽事代碼匯入」補存。</span></div>';
     return;
   }
 
@@ -5840,7 +6031,7 @@ function arcRenderLibraryList(){
   let html = '';
   let lastKey = null;
   shown.forEach(item => {
-    const d = arcDate(item);
+    const d = arcListDate(item);
     const key = d ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月` : '更早';
     if(key !== lastKey){ html += `<div class="arc-month">${key}</div>`; lastKey = key; }
     html += arcRowHTML(item);
@@ -5950,6 +6141,170 @@ function confirmSaveArchive(){
   });
 }
 
+/* ---------- 用賽事代碼匯入（補存過去忘記儲存的賽事）---------- */
+let arcImportRes = null;   // 查詢到、等待使用者確認的那一場
+
+function arcResetImport(){
+  arcImportRes = null;
+  const panel = document.getElementById('archiveImportPanel');
+  if(!panel) return;
+  panel.classList.add('hidden');
+  document.getElementById('archiveImport').classList.remove('open');
+  document.getElementById('archiveImportToggle').setAttribute('aria-expanded', 'false');
+  document.getElementById('archiveImportInput').value = '';
+  document.getElementById('archiveImportError').textContent = '';
+  const pv = document.getElementById('archiveImportPreview');
+  pv.classList.add('hidden'); pv.innerHTML = '';
+}
+
+function arcToggleImport(){
+  const wrap = document.getElementById('archiveImport');
+  const open = !wrap.classList.contains('open');
+  wrap.classList.toggle('open', open);
+  document.getElementById('archiveImportPanel').classList.toggle('hidden', !open);
+  document.getElementById('archiveImportToggle').setAttribute('aria-expanded', String(open));
+  if(open) setTimeout(() => { const i = document.getElementById('archiveImportInput'); if(i) i.focus(); }, 50);
+}
+
+// 暫時把全域 state 換成「別場賽事」，用 App 自己的算法算冠亞季軍，算完立刻換回來（不會動到目前這台的賽事）
+function arcWithState(foreign, fn){
+  const keep = state;
+  state = foreign;
+  try{ return fn(); }finally{ state = keep; }
+}
+
+function arcForeignState(res){
+  const meta = res.meta || {};
+  const matches = (res.matches || []).slice().sort((a, b) => {
+    if(a.round !== b.round) return a.round - b.round;
+    const ai = parseInt(String(a.id).split('-')[1] || 0, 10) || 0;
+    const bi = parseInt(String(b.id).split('-')[1] || 0, 10) || 0;
+    return ai - bi;
+  });
+  return {
+    tournament: { name: meta.name || '', pointsToWin: meta.pointsToWin, format: meta.format || 'knockout', quickMode: !!meta.quickMode, status: meta.status },
+    players: Array.isArray(meta.players) ? meta.players : [],
+    teams: Array.isArray(meta.teams) ? meta.teams : [],
+    matches,
+    currentRound: meta.currentRound || 1
+  };
+}
+
+function arcInspectImport(res){
+  const st = arcForeignState(res);
+  let award = { ready:false };
+  try{ award = arcWithState(st, getAwardPodiumData) || { ready:false }; }catch(e){ console.error('計算匯入賽事結果失敗', e); }
+  const real = st.matches.filter(m => !m.isBye && !m.inactive);
+  const stamps = st.matches.filter(m => m.status === 'completed').map(m => Number(m.completedAt)).filter(t => t > 0);
+  let eventAt = stamps.length ? Math.max(...stamps) : null;
+  if(!eventAt && res.meta && res.meta.updatedAt && res.meta.updatedAt.seconds) eventAt = res.meta.updatedAt.seconds * 1000;
+  return { st, award, matchCount: real.length, playerCount: st.players.filter(p => !p.withdrawn).length, eventAt,
+           ok: !!(award.ready && award.champion) };
+}
+
+function arcImportPayload(res, info, title){
+  const st = info.st, a = info.award;
+  return {
+    title: title || st.tournament.name || '未命名賽事',
+    format: st.tournament.format,
+    playerCount: info.playerCount,
+    matchCount: info.matchCount,
+    champion: a.champion || null,
+    runnerUp: a.silver || null,
+    third: a.bronze || null,
+    savedRole: 'import',                       // 這筆是用代碼匯入的
+    importedFromCode: res.eventCode,
+    eventAt: info.eventAt || null,             // 賽事實際結束時間（列表依這個排序）
+    playerNames: st.players.map(p => p.name),
+    players: st.players,
+    matches: st.matches,
+    originalEventCode: res.eventCode,
+    completedAt: info.eventAt || Date.now()
+  };
+}
+
+async function arcImportLookup(){
+  const input = document.getElementById('archiveImportInput');
+  const errEl = document.getElementById('archiveImportError');
+  const pv = document.getElementById('archiveImportPreview');
+  const btn = document.getElementById('archiveImportGo');
+  const code = (input.value || '').trim().toUpperCase();
+  errEl.textContent = '';
+  pv.classList.add('hidden'); pv.innerHTML = '';
+  arcImportRes = null;
+  if(!isValidEventCode(code)){ errEl.textContent = EVENT_CODE_LEN_MSG; input.focus(); return; }
+  if(!window.cloudSync || !window.cloudSync.fetchEvent){ errEl.textContent = '目前無法查詢賽事，請重新整理頁面後再試。'; return; }
+
+  btn.disabled = true; btn.textContent = '查詢中…';
+  try{
+    const res = await window.cloudSync.fetchEvent(code);
+    if(!res){ errEl.textContent = '找不到這組代碼。請確認有沒有輸入錯誤。'; return; }
+    const info = arcInspectImport(res);
+    if(!res.matches.length){
+      pv.innerHTML = '<div class="arc-imp-bad">這組代碼底下沒有比賽資料，可能已經被清除，沒辦法匯入。</div>';
+      pv.classList.remove('hidden');
+      return;
+    }
+    if(!info.ok){
+      pv.innerHTML = `<div class="arc-imp-bad">找到「${escapeHtml(info.st.tournament.name || '未命名賽事')}」，但這場賽事還沒有決出冠軍，暫時不能存入典藏。</div>`;
+      pv.classList.remove('hidden');
+      return;
+    }
+    arcImportRes = { res, info };
+    const f = info.st.tournament.format;
+    const when = info.eventAt ? new Date(info.eventAt) : null;
+    const whenTxt = when ? `　最後一場結束於 ${when.getMonth() + 1}/${when.getDate()} ${arcHM(when)}` : '';
+    pv.innerHTML = `<div class="arc-imp-card">
+      <div class="arc-imp-name">${escapeHtml(info.st.tournament.name || '未命名賽事')}</div>
+      <div class="arc-imp-meta">${escapeHtml(arcFormatLabel(f))}　${info.playerCount} ${f === 'team3v3' ? '支隊伍' : '位選手'}　${info.matchCount} 場${whenTxt}</div>
+      <div class="arc-imp-pod">
+        <div><span>冠軍</span><b class="g">${escapeHtml(info.award.champion)}</b></div>
+        ${info.award.silver ? `<div><span>亞軍</span><b>${escapeHtml(info.award.silver)}</b></div>` : ''}
+        ${info.award.bronze ? `<div><span>季軍</span><b>${escapeHtml(info.award.bronze)}</b></div>` : ''}
+      </div>
+      <div class="field-label">存進典藏的名稱（選填）</div>
+      <input class="text-input" id="archiveImportTitle" autocomplete="off" value="${escapeAttr(info.st.tournament.name || '')}">
+      <button type="button" class="btn btn-primary btn-block" style="margin-top:10px;" id="archiveImportSave" onclick="arcImportSave()">存入我的賽事典藏</button>
+      <p class="arc-imp-note">賽事代碼很短，時間久了可能被別場賽事重複使用。請先確認上面的名稱和冠軍，是不是你要的那一場。</p>
+    </div>`;
+    pv.classList.remove('hidden');
+  }catch(err){
+    console.error(err);
+    errEl.textContent = '查詢失敗，請確認網路連線後再試一次。';
+  }finally{
+    btn.disabled = false; btn.textContent = '查詢';
+  }
+}
+
+function arcImportSave(){
+  if(!arcImportRes) return;
+  const { res, info } = arcImportRes;
+  const title = (document.getElementById('archiveImportTitle').value || '').trim();
+  const payload = arcImportPayload(res, info, title);
+  const errEl = document.getElementById('archiveImportError');
+  errEl.textContent = '';
+
+  const doSave = () => {
+    const btn = document.getElementById('archiveImportSave');
+    if(btn){ btn.disabled = true; btn.textContent = '儲存中…'; }
+    window.cloudSync.archiveEvent(payload).then(() => {
+      showToast('已存入我的賽事典藏');
+      arcResetImport();
+      document.getElementById('archiveScroll').scrollTop = 0;
+      refreshArchiveList();
+    }).catch(err => {
+      console.error(err);
+      errEl.textContent = '儲存失敗，請稍後再試。';
+      if(btn){ btn.disabled = false; btn.textContent = '存入我的賽事典藏'; }
+    });
+  };
+
+  const dup = arcItems.find(i => i.originalEventCode === res.eventCode && i.champion === payload.champion
+    && (i.matchCount || 0) === payload.matchCount && (i.title || '') === payload.title);
+  if(dup) showConfirm('典藏裡已經有一份看起來一模一樣的賽事。還要再存一份嗎？', doSave);
+  else doSave();
+}
+
 /* ---------- 賽事詳情 ---------- */
 const arcDetailCache = new Map();   // 已讀過的完整資料，重複打開不用再讀
 function arcCacheDetail(item){
@@ -5978,7 +6333,7 @@ function viewArchive(id){
 function arcSetDetailHeader(item){
   document.getElementById('archiveDetailTitle').textContent = item.title || '未命名賽事';
   const d = arcDate(item);
-  const when = d ? `${arcYMD(d)} ${arcHM(d)} 封存` : '';
+  const when = d ? `${arcYMD(d)} ${arcHM(d)} ${item.savedRole === 'import' ? '匯入' : '封存'}` : '';
   document.getElementById('archiveDetailSub').textContent = `${when}　${arcFormatLabel(item.format || 'knockout')}`.trim();
 }
 
@@ -6179,7 +6534,7 @@ function arcOverviewHTML(){
 
   const saved = arcDate(item);
   const kv = [];
-  if(saved) kv.push(['封存時間', `${arcYMD(saved)}（${ARC_WEEK[saved.getDay()]}）${arcHM(saved)}`]);
+  if(saved) kv.push([item.savedRole === 'import' ? '匯入時間' : '封存時間', `${arcYMD(saved)}（${ARC_WEEK[saved.getDay()]}）${arcHM(saved)}`]);
   const stampTxt = d => (saved && arcSameDay(d, saved)) ? arcHM(d) : `${d.getMonth() + 1}/${d.getDate()} ${arcHM(d)}`;
   if(vm.firstDone) kv.push(['首場完賽', stampTxt(vm.firstDone)]);
   if(vm.lastDone && vm.firstDone && vm.lastDone.getTime() !== vm.firstDone.getTime()) kv.push(['最後完賽', stampTxt(vm.lastDone)]);
@@ -6370,7 +6725,13 @@ function getAwardPodiumData(){
   const playerCount = state.players.filter(p => !p.withdrawn).length;
   // 與「即時戰況／總場次」使用完全相同的計算口徑，不把輪空列入場次。
   const totalMatches = state.matches.filter(m => !m.isBye && !m.inactive).length;
-  const base = { playerCount, totalMatches, tournamentName: state.tournament.name || '未命名賽事' };
+  const base = {
+    playerCount,
+    totalMatches,
+    tournamentName: state.tournament.name || '未命名賽事',
+    format: state.tournament.format || 'knockout',
+    formatName: arcFormatLabel(state.tournament.format || 'knockout')
+  };
 
   if(isElimination(state.tournament.format)){
     if(state.matches.length === 0) return { ready:false };
@@ -6407,14 +6768,16 @@ function openAwardReport(){
     return;
   }
 
-  document.getElementById('awardChampName').textContent = data.champion;
-  document.getElementById('awardSilverName').textContent = data.silver || '－';
-  document.getElementById('awardBronzeName').textContent = data.bronze || '－';
+  setAwardName('awardChampName', data.champion, 64, 36, 7, 2.8);
+  setAwardName('awardSilverName', data.silver || '－', 38, 24, 7, 2.2);
+  setAwardName('awardBronzeName', data.bronze || '－', 38, 24, 7, 2.2);
   document.getElementById('awardSilverCard').style.display = data.silver ? '' : 'none';
   document.getElementById('awardBronzeCard').style.display = data.bronze ? '' : 'none';
   document.getElementById('awardPlayerCount').textContent = data.playerCount;
   document.getElementById('awardMatchCount').textContent = data.totalMatches;
-  document.getElementById('awardTournamentName').textContent = data.tournamentName;
+  document.getElementById('awardFormatName').textContent = data.formatName;
+  document.getElementById('awardParticipantLabel').textContent = data.format === 'team3v3' ? 'TEAMS' : 'PLAYERS';
+  setAwardName('awardTournamentName', data.tournamentName, 42, 28, 18, 1.25);
 
   const d = new Date();
   document.getElementById('awardDate').textContent =
@@ -6424,11 +6787,21 @@ function openAwardReport(){
   fitAwardStage();
 }
 
+// 戰報仍需容納現場常見的長隊名／選手名；字數較長時只縮小該欄，不壓縮整張海報。
+function setAwardName(id, value, baseSize, minSize, freeChars, step){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const text = String(value || '－');
+  const length = Array.from(text).length;
+  el.textContent = text;
+  el.style.fontSize = `${Math.max(minSize, baseSize - Math.max(0, length - freeChars) * step)}px`;
+}
+
 function hideAwardModal(){
   document.getElementById('awardModal').classList.remove('show');
 }
 
-// Scales the fixed 1080x1600 poster down to fit the modal on screen.
+// Scales the fixed 1080x1200 poster down to fit the modal on screen.
 // downloadAwardImage() temporarily resets this to capture full-res.
 function fitAwardStage(){
   const stage = document.getElementById('awardStage');
@@ -6437,11 +6810,33 @@ function fitAwardStage(){
   const maxW = Math.min(wrap.clientWidth || 420, 420);
   const scale = maxW / 1080;
   stage.style.transform = `scale(${scale})`;
-  wrap.style.height = (1600 * scale) + 'px';
+  wrap.style.height = (1200 * scale) + 'px';
 }
 window.addEventListener('resize', () => {
   if(document.getElementById('awardModal').classList.contains('show')) fitAwardStage();
 });
+
+// 手機瀏覽器常常在戰報彈窗打開的當下，中文字型（Noto Sans TC）還沒載入完成；
+// html2canvas 若在那之前擷取畫面，文字會整段抓不到字形而變成空白／色塊。
+// 這裡明確請求戰報會用到的字重，並等待瀏覽器回報字型真的就緒後才截圖。
+async function waitForAwardFontsReady(){
+  if(!('fonts' in document)) return;
+  const specs = [
+    '800 40px "Noto Sans TC"',
+    '800 17px "Noto Sans TC"',
+    '900 64px "Rajdhani"',
+    '900 38px "Rajdhani"',
+    '800 22px "Rajdhani"',
+    '700 38px "Space Mono"',
+    '600 16px "IBM Plex Mono"'
+  ];
+  try{
+    await Promise.all(specs.map(spec => document.fonts.load(spec)));
+    await document.fonts.ready;
+  }catch(e){
+    console.warn('等待字型載入時發生問題，將繼續產生圖片', e);
+  }
+}
 
 async function downloadAwardImage(){
   const stage = document.getElementById('awardStage');
@@ -6453,11 +6848,13 @@ async function downloadAwardImage(){
   }
 
   const originalTransform = stage.style.transform;
-  stage.style.transform = 'none'; // capture at full 1080x1600 resolution, not the scaled-down preview
+  stage.style.transform = 'none'; // capture at full 1080x1200 resolution, not the scaled-down preview
   const originalHTML = btn ? btn.innerHTML : '';
-  if(btn){ btn.disabled = true; btn.innerText = '產生圖片中…'; }
+  if(btn){ btn.disabled = true; btn.innerText = '字型載入中…'; }
 
   try{
+    await waitForAwardFontsReady();
+    if(btn){ btn.innerText = '產生圖片中…'; }
     const canvas = await html2canvas(stage, { backgroundColor:null, scale:2, useCORS:true });
     const safeName = (document.getElementById('awardTournamentName').textContent || 'beyblade-x')
       .replace(/[\\/:*?"<>|]/g, '_').trim() || 'beyblade-x';
@@ -6476,7 +6873,7 @@ async function downloadAwardImage(){
 
 async function copyShareLink(code, btnEl){
   code = (code || '').trim().toUpperCase();
-  if(code.length !== 3) return;
+  if(!isValidEventCode(code)) return;
   const link = buildShareLink(code);
   try{
     if(navigator.clipboard && navigator.clipboard.writeText){
@@ -6543,7 +6940,7 @@ function initCloud(){
 
     const params = new URLSearchParams(window.location.search);
     const urlCode = (params.get('code') || '').trim().toUpperCase();
-    if(urlCode.length === 3){
+    if(isValidEventCode(urlCode)){
       joinEventByCode(urlCode).finally(() => {
         const url = new URL(window.location.href);
         url.searchParams.delete('code');
@@ -6611,10 +7008,16 @@ function updateCloudStatusUI(){
   }
 }
 
+// 賽事代碼：新賽事一律產生 4 碼（31^4 ≈ 92 萬種組合）；
+// 舊賽事的 3 碼代碼仍然有效，所以輸入端接受 3～4 碼。
+const EVENT_CODE_LEN = 4;
+function isValidEventCode(code){ return code.length === 3 || code.length === EVENT_CODE_LEN; }
+const EVENT_CODE_LEN_MSG = '請輸入 4 碼賽事代碼（舊賽事的 3 碼代碼也可以）。';
+
 function genEventCode(){
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXY23456789'; // no O/0/I/1 to avoid confusion
   let code = '';
-  for(let i=0; i<3; i++) code += chars[Math.floor(Math.random()*chars.length)];
+  for(let i=0; i<EVENT_CODE_LEN; i++) code += chars[Math.floor(Math.random()*chars.length)];
   return code;
 }
 function genDistinctCodePair(){
@@ -6622,6 +7025,20 @@ function genDistinctCodePair(){
   let b = genEventCode();
   while(b === a) b = genEventCode();
   return [a, b];
+}
+// 建立賽事：抽一組新代碼 → 先查目前有沒有賽事在用（含選手碼欄位）→ 再用交易「登記 + 建立」。
+// 任何一步發現撞碼就換一組重抽，直到建立成功；代碼會永久登記，之後不會再被發給別場賽事。
+async function createEventWithFreshCodes(meta){
+  for(let i = 0; i < 8; i++){
+    const [a, b] = genDistinctCodePair();
+    const [ra, rb] = await Promise.all([window.cloudSync.resolveCode(a), window.cloudSync.resolveCode(b)]);
+    if(ra || rb) continue;
+    const ok = window.cloudSync.createEventUnique
+      ? await window.cloudSync.createEventUnique(a, b, meta)
+      : (await window.cloudSync.createEvent(a, b, meta), true);
+    if(ok) return [a, b];
+  }
+  throw new Error('無法產生不重複的賽事代碼');
 }
 
 function openCloudModal(){
@@ -6678,11 +7095,10 @@ function switchCloudTab(which){
 async function handleCreateEvent(){
   const errEl = document.getElementById('cloudError');
   errEl.innerText = '';
-  const [refCode, viewerCode] = genDistinctCodePair();
   const name = document.getElementById('cloudNewName').value.trim();
   try{
     if(name) state.tournament.name = name;
-    await window.cloudSync.createEvent(refCode, viewerCode, {
+    const [refCode, viewerCode] = await createEventWithFreshCodes({
       name: state.tournament.name, pointsToWin: state.tournament.pointsToWin,
       format: state.tournament.format, status: state.tournament.status,
       players: state.players, teams: state.teams || [], currentRound: state.currentRound
@@ -6708,7 +7124,7 @@ async function handleJoinEvent(){
   const errEl = document.getElementById('cloudError');
   errEl.innerText = '';
   const code = document.getElementById('cloudJoinCode').value.trim().toUpperCase();
-  if(code.length !== 3){ errEl.innerText = '請輸入 3 碼賽事代碼。'; return; }
+  if(!isValidEventCode(code)){ errEl.innerText = EVENT_CODE_LEN_MSG; return; }
   try{
     const ok = await joinEventByCode(code);
     if(!ok){ errEl.innerText = '找不到這組賽事代碼，請確認是否輸入正確。'; return; }
@@ -7061,8 +7477,8 @@ function addTeamEntry(team){
   entry.innerHTML = `
     <div class="team-entry-head">
       <span class="team-entry-index">TEAM ${String(index + 1).padStart(2,'0')}</span>
-      <input class="text-input team-entry-name" data-team-name placeholder="團體名稱" value="${escapeAttr(team?.name || '')}">
-      <button type="button" class="icon-btn" onclick="removeTeamEntry(this)" aria-label="移除團體" title="移除團體">${icon('x',15)}</button>
+      <input class="text-input team-entry-name" data-team-name placeholder="隊伍名稱" value="${escapeAttr(team?.name || '')}">
+      <button type="button" class="icon-btn" onclick="removeTeamEntry(this)" aria-label="移除隊伍" title="移除隊伍">${icon('x',15)}</button>
     </div>
     <div class="team-members">
       ${[0,1,2].map(i => `<label class="team-member-field"><span class="team-member-number">${i+1}</span><input class="text-input" data-team-member="${i}" placeholder="團員 ${i+1}" value="${escapeAttr(team?.members?.[i]?.name || team?.members?.[i] || '')}"></label>`).join('')}
@@ -7525,10 +7941,10 @@ function startTeamTournament(){
     : collectTeamEntries();
   const invalid = teams.find(team => !team.name || team.members.some(member => !member.name));
   if(teams.length < 2){ showAlert('3v3 團體賽至少需要 2 支隊伍。'); return; }
-  if(invalid){ showAlert('每支隊伍都必須填寫團體名稱與三名團員姓名。'); return; }
+  if(invalid){ showAlert('每支隊伍都必須填寫隊伍名稱與三名團員姓名。'); return; }
 
   const teamKeys = teams.map(team => normalizePlayerName(team.name));
-  if(new Set(teamKeys).size !== teamKeys.length){ showAlert('團體名稱不可重複。'); return; }
+  if(new Set(teamKeys).size !== teamKeys.length){ showAlert('隊伍名稱不可重複。'); return; }
   const memberNames = teams.flatMap(team => team.members.map(member => normalizePlayerName(member.name)));
   if(new Set(memberNames).size !== memberNames.length){ showAlert('團員姓名不可重複，請加上可辨識的稱呼。'); return; }
 
@@ -10126,7 +10542,7 @@ function hideModal(){
 
 
 function openUpdateNotes(){
-  showModal('目前版本：V3.12\n更新日期：2026/09/20\n\n更新摘要\n\n• QR 碼改為瀏覽器端直接產生，減少等待並避免一般情況下將賽事連結送往圖片服務。\n• QR 元件採首次使用才載入，失敗時自動切換備援產生方式。\n• 賽事與比分改為本次瀏覽暫存，下次開啟不會自動套用舊資料。\n• 玩家名單改為詢問後才儲存草稿，載入草稿前也會再次確認。\n• 團體戰對戰紀錄改為顯示「誰獲勝」，換棒後持續累積並分段。\n• 團體賽判分固定為三個按鈕：轉停 +1、擊飛/爆裂 +2、極限 +3。\n• 新增 3v3 團體單淘汰賽、三人建隊與賽前出戰排序。\n• 手機裁判台改為左右雙方同畫面對抗，不再上下堆疊。\n• 每位團員加入兩格 HP 視覺條，名單同步顯示剩餘血量。\n• HP 未歸零時由原團員繼續；歸零才淘汰並換下一位。\n• 全隊三名團員淘汰後判定隊伍落敗並推進賽程。', [{label:'知道了',className:'btn-primary'}]);
+  showModal('目前版本：V3.13\n更新日期：2026/09/21\n\n更新摘要\n\n• 新增「我的賽事典藏」：比賽結束後，可用 Google 帳號把整場賽事存到雲端，換手機、換電腦也能查看。選手模式在賽事結束後也能儲存。\n• 典藏改為手機優先的全螢幕版面：依月份瀏覽，可用關鍵字或賽制篩選，賽事再多也好找。\n• 賽事詳情分成「概覽、賽程、選手」三頁；賽程依輪次分組並可搜尋選手，點選手即可看他的所有比賽。\n• 新增「用賽事代碼匯入」：過去忘了儲存的賽事，輸入當時的代碼，確認內容後就能補存進典藏。\n• 賽事代碼從 3 碼改為 4 碼，組合更多；建立賽事時會保證新代碼不會和過去用過的重複（同時建立也不會撞）。舊的 3 碼代碼仍可使用。\n• 每場典藏自動記下封存日期與時間，並顯示首場與最後完賽時間。\n• 典藏資料分開存放，賽事變多也不會讓列表變慢；手機返回鍵只會關掉目前的典藏畫面，不會直接離開網頁。\n• 修正 Google 登入後又跳回未登入畫面的問題。\n• 團體賽的「參賽團體」「新增團體」改為「參賽隊伍」「新增隊伍」。\n• QR 碼改為瀏覽器端直接產生，減少等待並避免一般情況下將賽事連結送往圖片服務。', [{label:'知道了',className:'btn-primary'}]);
 }
 
 function showAlert(message){
